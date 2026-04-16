@@ -40,7 +40,12 @@
   --shadow-lg: 0 4px 16px rgba(0,0,0,0.10);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; max-width: 100%; }
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
 
 body {
   background: var(--bg);
@@ -399,6 +404,7 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  min-width: 0;
 }
 
 /* ─── ALERT BANNER ─── */
@@ -413,6 +419,8 @@ body {
   gap: 10px;
   font-size: 13px;
   color: var(--warn);
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .alert-banner svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
@@ -461,6 +469,7 @@ body {
   grid-template-columns: 1fr 2fr;
   gap: 16px;
   margin-bottom: 24px;
+  min-width: 0;
 }
 
 
@@ -470,6 +479,8 @@ body {
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .chart-title {
@@ -484,6 +495,8 @@ body {
 .chart-container {
   position: relative;
   height: 200px;
+  width: 100%;
+  overflow: hidden;
 }
 
 
@@ -1252,9 +1265,9 @@ tr:hover .delete-btn { opacity: 1; }
   .stat-sub { font-size: 9px; }
 
   /* ── Charts ── */
-  .charts-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
-  .chart-container { height: 160px; }
-  .chart-card { padding: 14px; }
+  .charts-row { grid-template-columns: 1fr; gap: 8px; margin-bottom: 12px; }
+  .chart-container { height: 140px; }
+  .chart-card { padding: 12px; }
   .chart-title { font-size: 11px; margin-bottom: 10px; }
 
   /* ── Overview task lists ── */
@@ -1505,13 +1518,13 @@ tr:hover .delete-btn { opacity: 1; }
       <div class="chart-card">
         <div class="chart-title">狀態分布</div>
         <div class="chart-container">
-          <canvas id="status-chart"></canvas>
+          <canvas id="status-chart" style="max-width:100%"></canvas>
         </div>
       </div>
       <div class="chart-card">
         <div class="chart-title">各產品線進度</div>
         <div class="chart-container">
-          <canvas id="progress-chart"></canvas>
+          <canvas id="progress-chart" style="max-width:100%"></canvas>
         </div>
       </div>
     </div>
