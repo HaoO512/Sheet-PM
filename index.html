@@ -264,7 +264,7 @@ body {
 .app-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 0 24px;
+  padding: 0 16px;
   height: 52px;
   display: flex;
   align-items: center;
@@ -272,6 +272,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 50;
+  gap: 8px;
 }
 
 .header-left {
@@ -282,9 +283,10 @@ body {
 
 .app-logo {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .sheet-badge {
@@ -296,7 +298,7 @@ body {
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.15s;
-  max-width: 200px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -414,39 +416,40 @@ body {
 /* ─── OVERVIEW TAB ─── */
 .overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
 }
+
 
 .stat-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 18px 20px;
+  padding: 14px 16px;
   box-shadow: var(--shadow);
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 10px;
   font-family: 'IBM Plex Mono', monospace;
   color: var(--text2);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 26px;
   font-family: 'IBM Plex Mono', monospace;
   font-weight: 500;
   line-height: 1;
 }
 
 .stat-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text3);
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .charts-row {
@@ -456,9 +459,6 @@ body {
   margin-bottom: 24px;
 }
 
-@media (max-width: 700px) {
-  .charts-row { grid-template-columns: 1fr; }
-}
 
 .chart-card {
   background: var(--surface);
@@ -481,6 +481,7 @@ body {
   position: relative;
   height: 200px;
 }
+
 
 /* ─── PROJECT CARDS ─── */
 .section-header {
@@ -1084,9 +1085,6 @@ tr:hover .delete-btn { opacity: 1; }
   margin-top: 16px;
 }
 
-@media (max-width: 900px) {
-  .overview-tasks-grid { grid-template-columns: 1fr; }
-}
 
 .ov-task-list {
   display: flex;
@@ -1200,17 +1198,109 @@ tr:hover .delete-btn { opacity: 1; }
 }
 
 /* ─── RESPONSIVE ─── */
+
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE — tablet & mobile
+═══════════════════════════════════════════ */
+
+/* Tablet */
+@media (max-width: 900px) {
+  .charts-row { grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+  .overview-tasks-grid { grid-template-columns: 1fr; gap: 10px; }
+  .overview-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+}
+
+/* Mobile */
 @media (max-width: 600px) {
-  .main-content { padding: 16px; }
-  .app-header { padding: 0 16px; }
-  .tab-bar { padding: 0 16px; overflow-x: auto; }
-  .tab { padding: 12px 12px; font-size: 12px; }
-  .overview-grid { grid-template-columns: repeat(2, 1fr); }
-  th:nth-child(4), td:nth-child(4),
-  th:nth-child(5), td:nth-child(5) { display: none; }
-  .login-card { padding: 32px 24px; }
-  .file-card { padding: 28px 20px; }
+
+  /* ── Layout ── */
+  .main-content { padding: 12px; }
+
+  /* ── Header ── */
+  .app-header { padding: 0 12px; height: 48px; }
+  .app-logo { font-size: 13px; }
+  .sheet-badge { max-width: 110px; font-size: 10px; }
   .last-sync { display: none; }
+  .btn-icon { width: 30px; height: 30px; }
+  .btn-icon svg { width: 14px; height: 14px; }
+  .user-avatar { width: 26px; height: 26px; font-size: 10px; }
+  .header-right { gap: 6px; }
+
+  /* ── Tabs ── */
+  .tab-bar { padding: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab { padding: 10px 14px; font-size: 11px; white-space: nowrap; }
+
+  /* ── Login / File screens ── */
+  .login-card { padding: 28px 20px; gap: 20px; }
+  .login-brand h1 { font-size: 18px; }
+  .file-card { padding: 24px 16px; gap: 16px; }
+  .url-input-row { flex-direction: column; }
+  .url-input-row input { width: 100%; }
+  .url-input-row .btn-primary { width: 100%; }
+
+  /* ── Stat cards ── */
+  .overview-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+  .stat-card { padding: 12px 14px; }
+  .stat-value { font-size: 22px; }
+  .stat-label { font-size: 9px; }
+  .stat-sub { font-size: 9px; }
+
+  /* ── Charts ── */
+  .charts-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+  .chart-container { height: 160px; }
+  .chart-card { padding: 14px; }
+  .chart-title { font-size: 11px; margin-bottom: 10px; }
+
+  /* ── Overview task lists ── */
+  .overview-tasks-grid { grid-template-columns: 1fr; gap: 8px; }
+  .ov-task-item { padding: 10px 14px; }
+  .ov-task-name { font-size: 13px; }
+
+  /* ── Alert banner ── */
+  .alert-banner { padding: 10px 12px; font-size: 12px; }
+
+  /* ── Project cards ── */
+  .project-header { padding: 12px 14px; gap: 10px; }
+  .project-name { font-size: 14px; }
+  .project-meta { gap: 6px; }
+  .progress-bar { width: 60px; }
+  .task-count { display: none; }
+
+  /* ── Task table — hide less important cols on mobile ── */
+  .task-toolbar { padding: 8px 14px; }
+  th, td { padding: 9px 10px; }
+  th:nth-child(4), td:nth-child(4),   /* 開始日期 */
+  th:nth-child(6), td:nth-child(6),   /* 備註 */
+  th:nth-child(7), td:nth-child(7) { display: none; }  /* 刪除 */
+  .task-name-input { font-size: 13px; }
+  .delete-btn { opacity: 1; }  /* always show on mobile */
+
+  /* ── All tasks filter bar ── */
+  .filter-bar { gap: 6px; }
+  .filter-chip { padding: 4px 10px; font-size: 10px; }
+  .filter-right { margin-left: 0; width: 100%; }
+  .search-input { width: 100%; }
+
+  /* ── Modal ── */
+  .modal { padding: 20px; }
+  .modal h3 { font-size: 14px; }
+
+  /* ── Gantt ── */
+  .gantt-label { width: 100px; font-size: 11px; }
+  .timeline-card { padding: 14px; }
+
+  /* ── Section header ── */
+  .section-header { margin-bottom: 8px; }
+  .btn-sm { font-size: 11px; padding: 5px 10px; }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  .overview-grid { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 20px; }
+  .tab { padding: 10px 10px; font-size: 10px; }
 }
 
 /* ─── EMPTY STATE ─── */
