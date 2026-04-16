@@ -1063,6 +1063,19 @@ tr:hover .delete-btn { opacity: 1; }
 }
 
 
+
+.ov-task-clickable {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ov-task-clickable:hover {
+  background: var(--bg2);
+}
+.ov-task-clickable:hover .ov-task-name {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 /* ─── OVERVIEW TASK LISTS ─── */
 .overview-tasks-grid {
   display: grid;
@@ -1345,18 +1358,12 @@ tr:hover .delete-btn { opacity: 1; }
       </div>
     </div>
     <div class="or-divider">或</div>
+    <button class="btn-primary" onclick="createTemplateSheet()" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      在 Google Drive 建立新模板
+    </button>
     <div class="or-divider">或</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="btn-primary" onclick="createTemplateSheet()" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;gap:8px">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        在 Google Drive 建立模板 Sheets
-      </button>
-      <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;text-align:center;line-height:1.6">
-        自動在你的 Drive 建立格式正確的空白 Sheets<br>含欄位說明與示範資料列
-      </div>
-    </div>
-    <div class="or-divider">或</div>
-    <button class="btn-demo" onclick="loadDemo()" style="width:100%">僅預覽示範資料（不連結 Sheets）</button>
+    <button class="btn-demo" onclick="loadDemo()" style="width:100%">預覽示範資料</button>
     <div style="display:flex; justify-content:flex-end;">
       <button class="btn-cancel" onclick="signOut()">登出</button>
     </div>
@@ -1903,6 +1910,21 @@ function launchApp() {
   renderAll();
 }
 
+function goToTask(projectId) {
+  // Switch to projects tab
+  switchTab('projects');
+  // Expand the target project card
+  setTimeout(() => {
+    const card = document.getElementById('pcard-' + projectId);
+    if (card && !card.classList.contains('expanded')) {
+      card.classList.add('expanded');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 80);
+}
+
 function renderOverviewTasks() {
   const today = new Date(); today.setHours(0,0,0,0);
 
@@ -1920,7 +1942,7 @@ function renderOverviewTasks() {
   function taskHTML(t) {
     const proj = state.projects.find(p => p.id === t.projectId);
     const dueStr = t.dueDate ? t.dueDate.replace(/-/g, '/') : '';
-    return `<div class="ov-task-item">
+    return `<div class="ov-task-item ov-task-clickable" onclick="goToTask('${t.projectId}')" title="前往產品線">
       <div class="ov-task-name">${esc(t.name)}</div>
       <div class="ov-task-meta">
         ${proj ? `<span class="proj-dot" style="background:${proj.color}"></span><span>${proj.name}</span>` : ''}
