@@ -1543,6 +1543,8 @@ tr:hover .delete-btn { opacity: 1; }
 // See README for instructions: https://github.com/your-repo/sheet-pm
 const GOOGLE_CLIENT_ID = '226321321683-pv0unefg7ckmf91eeeif48hm6vhtf82o.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
+// 預設 Sheets 檔案 ID — 登入後自動載入，留空則顯示選擇畫面
+const DEFAULT_SHEET_ID = '1h6FwNcLRqfQiBSJzKTMZvjfxGBPWIikMc8R-WiXeajY';
 
 // ─── STATE ────────────────────────────────────────────────
 let state = {
@@ -1640,8 +1642,14 @@ async function fetchUserInfo() {
     const data = await r.json();
     state.user = data;
     updateUserAvatar();
-    show('file-screen');
     hide('login-screen');
+    if (DEFAULT_SHEET_ID) {
+      state.spreadsheetId = DEFAULT_SHEET_ID;
+      showLoading('載入專案資料...');
+      loadSheetData().then(() => { hideLoading(); launchApp(); }).catch(() => { hideLoading(); show('file-screen'); });
+    } else {
+      show('file-screen');
+    }
   } catch(e) {
     toast('取得用戶資訊失敗');
   }
