@@ -1,0 +1,2448 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sheet PM — 專案管理看板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --bg: #f5f3ef;
+  --bg2: #edeae4;
+  --bg3: #e4e0d8;
+  --surface: #ffffff;
+  --border: #d8d4cc;
+  --border2: #c8c4bc;
+  --text: #1a1814;
+  --text2: #6a6660;
+  --text3: #a8a49c;
+  --accent: #1a1814;
+  --tag-none: #e8e4dc;
+  --tag-none-t: #6a6660;
+  --tag-progress: #dbeafe;
+  --tag-progress-t: #1e40af;
+  --tag-done: #dcfce7;
+  --tag-done-t: #166534;
+  --tag-hold: #fef9c3;
+  --tag-hold-t: #854d0e;
+  --tag-redo2: #fce7f3;
+  --tag-redo2-t: #9d174d;
+  --tag-redo3: #ede9fe;
+  --tag-redo3-t: #5b21b6;
+  --warn: #dc2626;
+  --warn-bg: #fef2f2;
+  --radius: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ─── LOGIN SCREEN ─── */
+#login-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 24px;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.login-brand {
+  text-align: center;
+}
+
+.login-brand h1 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.login-brand p {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 6px;
+  font-weight: 300;
+}
+
+.login-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+.login-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-section label {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  width: 100%;
+}
+
+.btn-google:hover { opacity: 0.85; }
+
+.btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.btn-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.btn-demo:hover {
+  border-color: var(--text);
+  color: var(--text);
+  background: var(--bg2);
+}
+
+.login-note {
+  font-size: 11px;
+  color: var(--text3);
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ─── FILE PICKER SCREEN ─── */
+#file-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  display: none;
+}
+
+.file-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 40px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.file-card h2 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.file-card p {
+  font-size: 13px;
+  color: var(--text2);
+  font-weight: 300;
+}
+
+.url-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.url-input-row input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.url-input-row input:focus {
+  border-color: var(--text);
+}
+
+.btn-primary {
+  padding: 10px 20px;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.btn-primary:hover { opacity: 0.82; }
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text3);
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.or-divider::before, .or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── MAIN APP ─── */
+#app {
+  display: none;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+/* Header */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-logo {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.sheet-badge {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text3);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-badge:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.last-sync {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text3);
+}
+
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text2);
+  transition: all 0.15s;
+}
+
+.btn-icon:hover {
+  border-color: var(--text);
+  color: var(--text);
+  background: var(--bg2);
+}
+
+.btn-icon svg { width: 15px; height: 15px; }
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ─── TABS ─── */
+.tab-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  gap: 0;
+}
+
+.tab {
+  padding: 12px 18px;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  font-family: 'IBM Plex Mono', monospace;
+  white-space: nowrap;
+}
+
+.tab:hover { color: var(--text); }
+
+.tab.active {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+/* ─── MAIN CONTENT ─── */
+.main-content {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ─── ALERT BANNER ─── */
+.alert-banner {
+  background: var(--warn-bg);
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--warn);
+}
+
+.alert-banner svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+
+/* ─── OVERVIEW TAB ─── */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+
+.stat-label {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 700px) {
+  .charts-row { grid-template-columns: 1fr; }
+}
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.chart-title {
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.chart-container {
+  position: relative;
+  height: 200px;
+}
+
+/* ─── PROJECT CARDS ─── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s;
+}
+
+.project-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.project-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.project-color-bar {
+  width: 3px;
+  height: 32px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.project-name {
+  font-size: 15px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.project-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.project-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-bar {
+  width: 80px;
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.progress-pct {
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+  min-width: 34px;
+  text-align: right;
+}
+
+.task-count {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text3);
+}
+
+.expand-btn {
+  color: var(--text3);
+  transition: transform 0.2s;
+  display: flex;
+}
+
+.expand-btn svg { width: 16px; height: 16px; }
+
+.project-card.expanded .expand-btn {
+  transform: rotate(180deg);
+}
+
+/* ─── TASK TABLE ─── */
+.task-section {
+  border-top: 1px solid var(--border);
+  padding: 0;
+  display: none;
+}
+
+.project-card.expanded .task-section {
+  display: block;
+}
+
+.task-toolbar {
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-sm:hover {
+  background: var(--bg3);
+  border-color: var(--text);
+}
+
+.btn-sm svg { width: 13px; height: 13px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead tr {
+  background: var(--bg2);
+}
+
+th {
+  padding: 8px 16px;
+  text-align: left;
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 400;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+tr:last-child td { border-bottom: none; }
+
+tbody tr { transition: background 0.1s; }
+tbody tr:hover { background: var(--bg); }
+
+.task-name-cell {
+  font-weight: 400;
+  max-width: 240px;
+}
+
+.task-name-input {
+  background: transparent;
+  border: none;
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  width: 100%;
+  outline: none;
+  padding: 0;
+}
+
+.task-name-input:focus {
+  background: var(--bg2);
+  padding: 4px 6px;
+  border-radius: 3px;
+  margin: -4px -6px;
+}
+
+/* ─── STATUS BADGE ─── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.status-badge:hover { opacity: 0.8; }
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.s-none     { background: var(--tag-none);     color: var(--tag-none-t); }
+.s-progress { background: var(--tag-progress);  color: var(--tag-progress-t); }
+.s-done     { background: var(--tag-done);      color: var(--tag-done-t); }
+.s-hold     { background: var(--tag-hold);      color: var(--tag-hold-t); }
+.s-redo2    { background: var(--tag-redo2);     color: var(--tag-redo2-t); }
+.s-redo3    { background: var(--tag-redo3);     color: var(--tag-redo3-t); }
+
+.s-none .status-dot     { background: var(--tag-none-t); }
+.s-progress .status-dot { background: var(--tag-progress-t); }
+.s-done .status-dot     { background: var(--tag-done-t); }
+.s-hold .status-dot     { background: var(--tag-hold-t); }
+.s-redo2 .status-dot    { background: var(--tag-redo2-t); }
+.s-redo3 .status-dot    { background: var(--tag-redo3-t); }
+
+/* ─── STATUS DROPDOWN ─── */
+.status-dropdown {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  overflow: hidden;
+  min-width: 160px;
+  display: none;
+}
+
+.status-dropdown.open { display: block; }
+
+.status-option {
+  padding: 9px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  transition: background 0.1s;
+}
+
+.status-option:hover { background: var(--bg2); }
+
+.status-advanced-toggle {
+  padding: 7px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+  transition: color 0.1s;
+  user-select: none;
+}
+
+.status-advanced-toggle:hover { color: var(--text2); }
+
+.status-advanced-toggle svg {
+  transition: transform 0.2s;
+}
+
+.status-advanced-toggle.open svg {
+  transform: rotate(180deg);
+}
+
+/* ─── DATE CELL ─── */
+.date-cell {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text2);
+  white-space: nowrap;
+}
+
+.date-cell.overdue { color: var(--warn); font-weight: 500; }
+.date-cell.soon    { color: #d97706; }
+
+input[type="date"] {
+  border: none;
+  background: transparent;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+}
+
+.assignee-cell {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.assignee-input {
+  background: transparent;
+  border: none;
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 12px;
+  color: var(--text2);
+  width: 80px;
+  outline: none;
+}
+
+.assignee-input:focus {
+  background: var(--bg2);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.notes-input {
+  background: transparent;
+  border: none;
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 12px;
+  color: var(--text3);
+  width: 100%;
+  outline: none;
+  resize: none;
+  height: 20px;
+  overflow: hidden;
+}
+
+.notes-input:focus {
+  background: var(--bg2);
+  padding: 4px 6px;
+  border-radius: 3px;
+  height: auto;
+}
+
+.delete-btn {
+  opacity: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  padding: 4px;
+  border-radius: 3px;
+  transition: all 0.12s;
+  display: flex;
+}
+
+tr:hover .delete-btn { opacity: 1; }
+.delete-btn:hover { color: var(--warn); background: var(--warn-bg); }
+.delete-btn svg { width: 13px; height: 13px; }
+
+/* ─── ADD ROW ─── */
+.add-task-row td {
+  padding: 8px 16px;
+  background: var(--bg);
+}
+
+.add-task-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.12s;
+}
+
+.add-task-btn:hover { color: var(--text); }
+.add-task-btn svg { width: 14px; height: 14px; }
+
+/* ─── TASKS TAB ─── */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-chip {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.12s;
+  background: var(--surface);
+}
+
+.filter-chip:hover, .filter-chip.active {
+  border-color: var(--text);
+  color: var(--text);
+  background: var(--bg3);
+}
+
+.filter-right {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  padding: 7px 12px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  width: 180px;
+  transition: border-color 0.15s;
+}
+
+.search-input:focus { border-color: var(--text); }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  display: none;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modal h3 {
+  font-size: 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.form-input {
+  padding: 9px 12px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.form-input:focus { border-color: var(--text); background: var(--surface); }
+
+.color-picker-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.12s;
+}
+
+.color-dot.selected { border-color: var(--text); }
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 9px 18px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text2);
+  font-family: 'IBM Plex Sans TC', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+/* ─── TOAST ─── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--text);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: 'IBM Plex Mono', monospace;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 0.2s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── LOADING ─── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  display: none;
+}
+
+.loading-overlay.visible { display: flex; }
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 600px) {
+  .main-content { padding: 16px; }
+  .app-header { padding: 0 16px; }
+  .tab-bar { padding: 0 16px; overflow-x: auto; }
+  .tab { padding: 12px 12px; font-size: 12px; }
+  .overview-grid { grid-template-columns: repeat(2, 1fr); }
+  th:nth-child(4), td:nth-child(4),
+  th:nth-child(5), td:nth-child(5) { display: none; }
+  .login-card { padding: 32px 24px; }
+  .file-card { padding: 28px 20px; }
+  .last-sync { display: none; }
+}
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text3);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+}
+
+.empty-state svg {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 12px;
+  opacity: 0.3;
+  display: block;
+}
+
+/* ─── TIMELINE TAB ─── */
+.timeline-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+
+.gantt-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  min-width: 600px;
+}
+
+.gantt-row:last-child { border-bottom: none; }
+
+.gantt-label {
+  width: 160px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gantt-track {
+  flex: 1;
+  height: 20px;
+  background: var(--bg3);
+  border-radius: 3px;
+  position: relative;
+  overflow: visible;
+}
+
+.gantt-bar {
+  position: absolute;
+  height: 100%;
+  border-radius: 3px;
+  min-width: 4px;
+  transition: opacity 0.15s;
+}
+
+.gantt-bar:hover { opacity: 0.8; }
+
+.gantt-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border2);
+  margin-bottom: 4px;
+  min-width: 600px;
+}
+
+.gantt-months {
+  flex: 1;
+  display: flex;
+}
+
+.gantt-month {
+  flex: 1;
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ─── LOGIN ─── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <h1>Sheet PM</h1>
+      <p>以 Google Sheets 為核心的專案管理看板</p>
+    </div>
+    <div class="login-divider"></div>
+    <div class="login-section">
+      <label>使用 Google 帳戶登入以存取你的 Sheets</label>
+      <button class="btn-google" onclick="signIn()">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        使用 Google 帳戶登入
+      </button>
+    </div>
+    <div class="or-divider">或</div>
+    <div class="login-section">
+      <label>不需要帳戶，使用示範資料</label>
+      <button class="btn-demo" onclick="loadDemo()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14,2 14,8 20,8"/>
+        </svg>
+        載入示範資料
+      </button>
+    </div>
+    <div class="login-note">登入後，你的資料存放於 Google Sheets，本應用程式不儲存任何資料</div>
+  </div>
+</div>
+
+<!-- ─── FILE PICKER ─── -->
+<div id="file-screen">
+  <div class="file-card">
+    <div>
+      <h2>選擇 Google Sheets 檔案</h2>
+      <p style="margin-top:6px">貼上你的 Google Sheets 網址，或從 Drive 選取</p>
+    </div>
+    <div class="form-group">
+      <label>Sheets 網址</label>
+      <div class="url-input-row">
+        <input type="text" id="sheet-url-input" placeholder="https://docs.google.com/spreadsheets/d/...">
+        <button class="btn-primary" onclick="loadFromUrl()">載入</button>
+      </div>
+    </div>
+    <div class="or-divider">或</div>
+    <button class="btn-primary" onclick="openDrivePicker()" style="width:100%">
+      從 Google Drive 選取
+    </button>
+    <div class="or-divider">或</div>
+    <div class="or-divider">或</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn-primary" onclick="createTemplateSheet()" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        在 Google Drive 建立模板 Sheets
+      </button>
+      <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;text-align:center;line-height:1.6">
+        自動在你的 Drive 建立格式正確的空白 Sheets<br>含欄位說明與示範資料列
+      </div>
+    </div>
+    <div class="or-divider">或</div>
+    <button class="btn-demo" onclick="loadDemo()" style="width:100%">僅預覽示範資料（不連結 Sheets）</button>
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="btn-cancel" onclick="signOut()">登出</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MAIN APP ─── -->
+<div id="app">
+  <header class="app-header">
+    <div class="header-left">
+      <div class="app-logo">Sheet PM</div>
+      <div class="sheet-badge" id="sheet-badge" onclick="switchSheet()" title="點擊切換檔案">—</div>
+    </div>
+    <div class="header-right">
+      <span class="last-sync" id="last-sync">—</span>
+      <button class="btn-icon" onclick="refreshData()" title="重新整理">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+      <button class="btn-icon" onclick="exportData()" title="匯出 CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+      <div class="user-avatar" id="user-avatar" onclick="signOut()" title="登出">U</div>
+    </div>
+  </header>
+
+  <nav class="tab-bar">
+    <div class="tab active" data-tab="overview" onclick="switchTab('overview')">概覽</div>
+    <div class="tab" data-tab="projects" onclick="switchTab('projects')">產品線</div>
+    <div class="tab" data-tab="tasks" onclick="switchTab('tasks')">所有任務</div>
+    <div class="tab" data-tab="timeline" onclick="switchTab('timeline')">時程</div>
+  </nav>
+
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview" class="main-content">
+    <div id="alerts-section"></div>
+    <div class="overview-grid" id="stat-cards"></div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">狀態分布</div>
+        <div class="chart-container">
+          <canvas id="status-chart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">各產品線進度</div>
+        <div class="chart-container">
+          <canvas id="progress-chart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="section-header">
+      <div class="section-title">產品線一覽</div>
+    </div>
+    <div class="project-list" id="overview-project-list"></div>
+  </div>
+
+  <!-- PROJECTS TAB -->
+  <div id="tab-projects" class="main-content" style="display:none;">
+    <div class="section-header">
+      <div class="section-title">產品線管理</div>
+      <button class="btn-sm btn-primary" onclick="openAddProject()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增產品線
+      </button>
+    </div>
+    <div class="project-list" id="projects-list"></div>
+  </div>
+
+  <!-- TASKS TAB -->
+  <div id="tab-tasks" class="main-content" style="display:none;">
+    <div class="filter-bar">
+      <div class="filter-chip active" data-filter="all" onclick="filterTasks('all',this)">全部</div>
+      <div class="filter-chip" data-filter="未開始" onclick="filterTasks('未開始',this)">未開始</div>
+      <div class="filter-chip" data-filter="進行中" onclick="filterTasks('進行中',this)">進行中</div>
+      <div class="filter-chip" data-filter="完成" onclick="filterTasks('完成',this)">完成</div>
+      <div class="filter-chip" data-filter="擱置" onclick="filterTasks('擱置',this)">擱置</div>
+      <div class="filter-chip" data-filter="overdue" onclick="filterTasks('overdue',this)">⚠ 逾期</div>
+      <div class="filter-right">
+        <input class="search-input" type="text" placeholder="搜尋任務..." oninput="searchTasks(this.value)" id="task-search">
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);">
+      <table id="all-tasks-table">
+        <thead>
+          <tr>
+            <th>任務</th>
+            <th>產品線</th>
+            <th>狀態</th>
+            <th>負責人</th>
+            <th>截止日期</th>
+            <th>備註</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="all-tasks-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TIMELINE TAB -->
+  <div id="tab-timeline" class="main-content" style="display:none;">
+    <div class="chart-card timeline-card">
+      <div class="chart-title">專案時程甘特圖</div>
+      <div id="gantt-chart"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS DROPDOWN -->
+<div id="status-dropdown" class="status-dropdown">
+  <div class="status-option" onclick="setStatus('未開始')"><span class="status-badge s-none"><span class="status-dot"></span>未開始</span></div>
+  <div class="status-option" onclick="setStatus('進行中')"><span class="status-badge s-progress"><span class="status-dot"></span>進行中</span></div>
+  <div class="status-option" onclick="setStatus('完成')"><span class="status-badge s-done"><span class="status-dot"></span>完成</span></div>
+  <div class="status-advanced-toggle" onclick="toggleAdvancedStatus(event)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+    更多狀態
+  </div>
+  <div id="status-advanced" style="display:none">
+    <div class="status-option" onclick="setStatus('擱置')"><span class="status-badge s-hold"><span class="status-dot"></span>擱置</span></div>
+    <div class="status-option" onclick="setStatus('二次進行中')"><span class="status-badge s-redo2"><span class="status-dot"></span>二次進行中</span></div>
+    <div class="status-option" onclick="setStatus('三次進行中')"><span class="status-badge s-redo3"><span class="status-dot"></span>三次進行中</span></div>
+  </div>
+</div>
+
+<!-- MODAL: ADD PROJECT -->
+<div class="modal-overlay" id="modal-add-project">
+  <div class="modal">
+    <h3>新增產品線</h3>
+    <div class="form-group">
+      <label>產品線名稱</label>
+      <input type="text" id="new-project-name" class="form-input" placeholder="例：P6 燭台">
+    </div>
+    <div class="form-group">
+      <label>顏色標記</label>
+      <div class="color-picker-row" id="color-picker"></div>
+    </div>
+    <div class="form-group">
+      <label>負責人</label>
+      <input type="text" id="new-project-owner" class="form-input" placeholder="例：Hiro">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-add-project')">取消</button>
+      <button class="btn-primary" onclick="addProject()">建立</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">載入中...</div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+// SETUP: Replace with your Google Cloud OAuth Client ID
+// See README for instructions: https://github.com/your-repo/sheet-pm
+const GOOGLE_CLIENT_ID = '226321321683-pv0unefg7ckmf91eeeif48hm6vhtf82o.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
+
+// ─── STATE ────────────────────────────────────────────────
+let state = {
+  user: null,
+  accessToken: null,
+  spreadsheetId: null,
+  sheetName: null,
+  projects: [],    // [{id, name, color, owner}]
+  tasks: [],       // [{id, projectId, name, status, assignee, startDate, dueDate, notes}]
+  isDemo: false,
+  lastSync: null,
+  pendingChanges: [],
+};
+
+let statusDropTarget = null;
+let selectedColor = '#2563eb';
+let charts = {};
+
+// ─── STATUS CONFIG ────────────────────────────────────────
+const STATUS_CONFIG = {
+  '未開始':    { cls: 's-none',     label: '未開始' },
+  '進行中':    { cls: 's-progress', label: '進行中' },
+  '完成':      { cls: 's-done',     label: '完成' },
+  '擱置':      { cls: 's-hold',     label: '擱置' },
+  '二次進行中':{ cls: 's-redo2',    label: '二次進行中' },
+  '三次進行中':{ cls: 's-redo3',    label: '三次進行中' },
+};
+
+const PROJECT_COLORS = [
+  '#2563eb','#16a34a','#dc2626','#d97706',
+  '#7c3aed','#0891b2','#be185d','#374151',
+];
+
+// ─── DEMO DATA ────────────────────────────────────────────
+const DEMO_DATA = {
+  sheetName: 'Sheet PM 示範',
+  projects: [
+    { id: 'p1', name: 'P2 台燈',  color: '#2563eb', owner: 'Hiro' },
+    { id: 'p2', name: 'P3 托盤',  color: '#16a34a', owner: 'Mille' },
+    { id: 'p3', name: 'P4 筆架',  color: '#d97706', owner: 'Hiro' },
+    { id: 'p4', name: 'P5 香坐',  color: '#7c3aed', owner: 'Mille' },
+  ],
+  tasks: [
+    { id:'t1',  projectId:'p1', name:'矽膠模具開模',      status:'完成',      assignee:'Hiro',  startDate:'2025-02-01', dueDate:'2025-03-01', notes:'雙截面翻模' },
+    { id:'t2',  projectId:'p1', name:'礦物樹脂配方測試',  status:'完成',      assignee:'Hiro',  startDate:'2025-03-01', dueDate:'2025-03-20', notes:'' },
+    { id:'t3',  projectId:'p1', name:'比例修正',          status:'進行中',    assignee:'Hiro',  startDate:'2025-03-20', dueDate:'2025-04-20', notes:'高寬比需調整' },
+    { id:'t4',  projectId:'p1', name:'燈罩材質確認',      status:'未開始',    assignee:'Hiro',  startDate:'2025-04-20', dueDate:'2025-05-10', notes:'' },
+    { id:'t5',  projectId:'p1', name:'電料選型',          status:'未開始',    assignee:'Hiro',  startDate:'2025-04-25', dueDate:'2025-05-15', notes:'' },
+    { id:'t6',  projectId:'p2', name:'設計定稿',          status:'完成',      assignee:'Hiro',  startDate:'2025-02-15', dueDate:'2025-03-10', notes:'' },
+    { id:'t7',  projectId:'p2', name:'材料採購',          status:'進行中',    assignee:'Mille', startDate:'2025-03-10', dueDate:'2025-04-01', notes:'等供應商報價' },
+    { id:'t8',  projectId:'p2', name:'樣品製作',          status:'未開始',    assignee:'Hiro',  startDate:'2025-04-01', dueDate:'2025-04-25', notes:'' },
+    { id:'t9',  projectId:'p2', name:'品牌攝影',          status:'未開始',    assignee:'Mille', startDate:'2025-04-25', dueDate:'2025-05-10', notes:'' },
+    { id:'t10', projectId:'p3', name:'草稿設計',          status:'二次進行中',assignee:'Hiro',  startDate:'2025-03-01', dueDate:'2025-03-25', notes:'第一版比例不對' },
+    { id:'t11', projectId:'p3', name:'3D 建模',           status:'進行中',    assignee:'Hiro',  startDate:'2025-03-25', dueDate:'2025-04-20', notes:'' },
+    { id:'t12', projectId:'p3', name:'打樣',              status:'未開始',    assignee:'Hiro',  startDate:'2025-04-20', dueDate:'2025-05-10', notes:'' },
+    { id:'t13', projectId:'p4', name:'概念發展',          status:'進行中',    assignee:'Hiro',  startDate:'2025-03-15', dueDate:'2025-04-10', notes:'香材選定中' },
+    { id:'t14', projectId:'p4', name:'香座造型確認',      status:'未開始',    assignee:'Hiro',  startDate:'2025-04-10', dueDate:'2025-05-01', notes:'' },
+    { id:'t15', projectId:'p4', name:'品牌故事撰寫',      status:'未開始',    assignee:'Mille', startDate:'2025-05-01', dueDate:'2025-05-15', notes:'' },
+  ]
+};
+
+// ─── GOOGLE OAUTH ──────────────────────────────────────────
+function signIn() {
+  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.startsWith('YOUR_')) {
+    toast('⚠ 請先在程式碼中設定 GOOGLE_CLIENT_ID');
+    return;
+  }
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: window.location.origin + window.location.pathname,
+    response_type: 'token',
+    scope: SCOPES,
+    state: 'signin',
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/auth?' + params;
+}
+
+function handleOAuthCallback() {
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const token = params.get('access_token');
+  if (token) {
+    state.accessToken = token;
+    sessionStorage.setItem('access_token', token);
+    window.history.replaceState(null, '', window.location.pathname);
+    fetchUserInfo();
+  }
+}
+
+async function fetchUserInfo() {
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: 'Bearer ' + state.accessToken }
+    });
+    const data = await r.json();
+    state.user = data;
+    updateUserAvatar();
+    show('file-screen');
+    hide('login-screen');
+  } catch(e) {
+    toast('取得用戶資訊失敗');
+  }
+}
+
+function updateUserAvatar() {
+  const el = document.getElementById('user-avatar');
+  if (state.user?.picture) {
+    el.innerHTML = `<img src="${state.user.picture}" alt="">`;
+  } else if (state.user?.name) {
+    el.textContent = state.user.name[0];
+  }
+}
+
+function signOut() {
+  sessionStorage.removeItem('access_token');
+  state = { user:null, accessToken:null, spreadsheetId:null, sheetName:null,
+            projects:[], tasks:[], isDemo:false, lastSync:null, pendingChanges:[] };
+  show('login-screen');
+  hide('file-screen');
+  hide('app');
+}
+
+// ─── FILE LOADING ──────────────────────────────────────────
+async function loadFromUrl() {
+  const url = document.getElementById('sheet-url-input').value.trim();
+  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (!match) { toast('請輸入有效的 Google Sheets 網址'); return; }
+  state.spreadsheetId = match[1];
+  showLoading('讀取 Sheets 資料...');
+  await loadSheetData();
+  hideLoading();
+  launchApp();
+}
+
+function openDrivePicker() {
+  if (!state.accessToken) { toast('請先登入'); return; }
+  toast('💡 目前請貼上 Sheets 網址，Drive Picker 需要額外 API Key 設定');
+}
+
+function switchSheet() {
+  show('file-screen');
+  hide('app');
+}
+
+function loadDemo() {
+  state.isDemo = true;
+  state.projects = DEMO_DATA.projects.map(p => ({...p}));
+  state.tasks = DEMO_DATA.tasks.map(t => ({...t}));
+  state.sheetName = DEMO_DATA.sheetName;
+  state.lastSync = new Date();
+  hide('login-screen');
+  hide('file-screen');
+  launchApp();
+}
+
+// ─── CREATE TEMPLATE ──────────────────────────────────────
+async function createTemplateSheet() {
+  if (!state.accessToken) { toast('請先登入 Google 帳戶'); return; }
+  showLoading('在 Google Drive 建立模板...');
+  try {
+    const headers = {
+      'Authorization': 'Bearer ' + state.accessToken,
+      'Content-Type': 'application/json',
+    };
+
+    // 1. Create spreadsheet
+    const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+      method: 'POST', headers,
+      body: JSON.stringify({
+        properties: { title: 'Sheet PM 專案模板' },
+        sheets: [
+          { properties: { title: 'Projects', sheetId: 0 } },
+          { properties: { title: 'Tasks', sheetId: 1 } },
+          { properties: { title: '說明', sheetId: 2 } },
+        ]
+      })
+    });
+    const sheet = await createRes.json();
+    const sid = sheet.spreadsheetId;
+
+    // 2. Write Projects sheet
+    const projValues = [
+      ['id', 'name', 'color', 'owner'],
+      ['# 欄位說明', '產品線名稱', '色碼 (#hex)', '負責人'],
+      ['p1', '範例產品線 A', '#2563eb', 'Hiro'],
+      ['p2', '範例產品線 B', '#16a34a', 'Mille'],
+    ];
+
+    // 3. Write Tasks sheet
+    const taskValues = [
+      ['id', 'projectId', 'name', 'status', 'assignee', 'startDate', 'dueDate', 'notes'],
+      ['# 欄位說明', '對應 Projects 的 id', '任務名稱', '狀態（見說明頁）', '負責人', 'YYYY-MM-DD', 'YYYY-MM-DD', '備註'],
+      ['t1', 'p1', '設計草稿', '未開始', 'Hiro', '', '', ''],
+      ['t2', 'p1', '材料確認', '進行中', 'Hiro', '2025-04-01', '2025-04-30', '等供應商報價'],
+      ['t3', 'p1', '樣品製作', '完成', 'Hiro', '2025-03-01', '2025-03-20', ''],
+      ['t4', 'p2', '品牌攝影', '未開始', 'Mille', '', '2025-05-15', ''],
+    ];
+
+    // 4. Write 說明 sheet
+    const infoValues = [
+      ['Sheet PM — 欄位說明'],
+      [''],
+      ['【Projects 工作表】'],
+      ['id', '唯一識別碼，自訂字串，不可重複（例：p1, p2）'],
+      ['name', '產品線名稱，顯示在看板上'],
+      ['color', '色碼，格式 #xxxxxx（例：#2563eb）'],
+      ['owner', '負責人姓名'],
+      [''],
+      ['【Tasks 工作表】'],
+      ['id', '唯一識別碼，不可重複（例：t1, t2）'],
+      ['projectId', '對應 Projects 的 id，決定此任務屬於哪條產品線'],
+      ['name', '任務名稱'],
+      ['status', '狀態，只能填以下其中一個：'],
+      ['', '未開始'],
+      ['', '進行中'],
+      ['', '完成'],
+      ['', '擱置'],
+      ['', '二次進行中'],
+      ['', '三次進行中'],
+      ['assignee', '負責人'],
+      ['startDate', '開始日期，格式 YYYY-MM-DD（例：2025-04-01）'],
+      ['dueDate', '截止日期，格式 YYYY-MM-DD'],
+      ['notes', '備註，可留空'],
+      [''],
+      ['【注意事項】'],
+      ['', '第一列為欄位標題，請勿刪除或更改'],
+      ['', '以 # 開頭的列為說明列，可刪除'],
+      ['', '日期欄若不填，請保持空白即可'],
+    ];
+
+    const base = `https://sheets.googleapis.com/v4/spreadsheets/${sid}/values`;
+    await fetch(`${base}/Projects?valueInputOption=RAW`, { method:'PUT', headers, body: JSON.stringify({ values: projValues }) });
+    await fetch(`${base}/Tasks?valueInputOption=RAW`,    { method:'PUT', headers, body: JSON.stringify({ values: taskValues }) });
+    await fetch(`${base}/說明?valueInputOption=RAW`,     { method:'PUT', headers, body: JSON.stringify({ values: infoValues }) });
+
+    // 5. Load it directly
+    state.spreadsheetId = sid;
+    state.isDemo = false;
+    await loadSheetData();
+    hideLoading();
+    launchApp();
+    toast('✓ 模板已建立並開啟');
+
+    // 6. Open in new tab for reference
+    setTimeout(() => {
+      window.open(`https://docs.google.com/spreadsheets/d/${sid}`, '_blank');
+    }, 800);
+
+  } catch(e) {
+    hideLoading();
+    console.error(e);
+    toast('建立失敗，請確認已啟用 Google Sheets API');
+  }
+}
+
+// ─── SHEETS API ────────────────────────────────────────────
+async function loadSheetData() {
+  try {
+    const base = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheetId}`;
+    const headers = { Authorization: 'Bearer ' + state.accessToken };
+
+    // Get sheet metadata
+    const meta = await (await fetch(base, { headers })).json();
+    state.sheetName = meta.properties?.title || 'Untitled';
+
+    // Read projects sheet
+    const projRes = await fetch(`${base}/values/Projects?majorDimension=ROWS`, { headers });
+    const projData = await projRes.json();
+    parseProjects(projData.values || []);
+
+    // Read tasks sheet
+    const taskRes = await fetch(`${base}/values/Tasks?majorDimension=ROWS`, { headers });
+    const taskData = await taskRes.json();
+    parseTasks(taskData.values || []);
+
+    state.lastSync = new Date();
+  } catch(e) {
+    console.error(e);
+    toast('讀取 Sheets 失敗，請確認網址與權限');
+    throw e;
+  }
+}
+
+function parseProjects(rows) {
+  if (rows.length < 2) return;
+  // header: id, name, color, owner
+  state.projects = rows.slice(1).filter(r => r[0]).map(r => ({
+    id: r[0] || uid(),
+    name: r[1] || '',
+    color: r[2] || '#2563eb',
+    owner: r[3] || '',
+  }));
+}
+
+function parseTasks(rows) {
+  if (rows.length < 2) return;
+  // header: id, projectId, name, status, assignee, startDate, dueDate, notes
+  state.tasks = rows.slice(1).filter(r => r[0]).map(r => ({
+    id: r[0] || uid(),
+    projectId: r[1] || '',
+    name: r[2] || '',
+    status: r[3] || '未開始',
+    assignee: r[4] || '',
+    startDate: r[5] || '',
+    dueDate: r[6] || '',
+    notes: r[7] || '',
+  }));
+}
+
+async function writeToSheet() {
+  if (state.isDemo) {
+    toast('示範模式：變更不會儲存到 Sheets');
+    return;
+  }
+  if (!state.accessToken || !state.spreadsheetId) return;
+
+  const base = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheetId}/values`;
+  const headers = {
+    'Authorization': 'Bearer ' + state.accessToken,
+    'Content-Type': 'application/json',
+  };
+
+  // Write projects
+  const projValues = [
+    ['id','name','color','owner'],
+    ...state.projects.map(p => [p.id, p.name, p.color, p.owner])
+  ];
+
+  // Write tasks
+  const taskValues = [
+    ['id','projectId','name','status','assignee','startDate','dueDate','notes'],
+    ...state.tasks.map(t => [t.id, t.projectId, t.name, t.status, t.assignee, t.startDate, t.dueDate, t.notes])
+  ];
+
+  await fetch(`${base}/Projects?valueInputOption=RAW`, {
+    method: 'PUT', headers,
+    body: JSON.stringify({ values: projValues })
+  });
+
+  await fetch(`${base}/Tasks?valueInputOption=RAW`, {
+    method: 'PUT', headers,
+    body: JSON.stringify({ values: taskValues })
+  });
+
+  state.lastSync = new Date();
+  updateSyncTime();
+}
+
+async function refreshData() {
+  if (state.isDemo) { renderAll(); toast('示範模式已重新整理'); return; }
+  if (!state.spreadsheetId) return;
+  showLoading('同步中...');
+  try {
+    await loadSheetData();
+    renderAll();
+    toast('已同步最新資料');
+  } catch(e) {}
+  hideLoading();
+}
+
+// ─── LAUNCH APP ────────────────────────────────────────────
+function launchApp() {
+  hide('login-screen');
+  hide('file-screen');
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('sheet-badge').textContent = state.sheetName;
+  updateSyncTime();
+  renderAll();
+}
+
+function renderAll() {
+  renderStatCards();
+  renderCharts();
+  renderProjectList('overview-project-list', false);
+  renderProjectList('projects-list', true);
+  renderAllTasks();
+  renderTimeline();
+  renderAlerts();
+  updateSyncTime();
+}
+
+function updateSyncTime() {
+  const el = document.getElementById('last-sync');
+  if (state.lastSync) {
+    el.textContent = '同步 ' + state.lastSync.toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'});
+  }
+}
+
+// ─── STATS ────────────────────────────────────────────────
+function renderStatCards() {
+  const total = state.tasks.length;
+  const done  = state.tasks.filter(t => t.status === '完成').length;
+  const inpro = state.tasks.filter(t => ['進行中','二次進行中','三次進行中'].includes(t.status)).length;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const overdue = state.tasks.filter(t => {
+    if (!t.dueDate || t.status === '完成') return false;
+    return new Date(t.dueDate) < today;
+  }).length;
+
+  const cards = [
+    { label:'總任務數',   value: total,            sub: `${state.projects.length} 個產品線` },
+    { label:'進行中',     value: inpro,             sub: `佔 ${total ? Math.round(inpro/total*100) : 0}%` },
+    { label:'已完成',     value: done,              sub: `${total ? Math.round(done/total*100) : 0}% 完成率` },
+    { label:'逾期任務',   value: overdue,           sub: overdue > 0 ? '需要關注' : '一切正常' },
+  ];
+
+  document.getElementById('stat-cards').innerHTML = cards.map(c => `
+    <div class="stat-card">
+      <div class="stat-label">${c.label}</div>
+      <div class="stat-value" style="${c.label==='逾期任務'&&c.value>0?'color:var(--warn)':''}">${c.value}</div>
+      <div class="stat-sub">${c.sub}</div>
+    </div>
+  `).join('');
+}
+
+// ─── CHARTS ───────────────────────────────────────────────
+function renderCharts() {
+  // Status donut chart
+  const statusCounts = {};
+  Object.keys(STATUS_CONFIG).forEach(s => statusCounts[s] = 0);
+  state.tasks.forEach(t => { if (statusCounts[t.status] !== undefined) statusCounts[t.status]++; });
+
+  const sLabels = Object.keys(statusCounts).filter(k => statusCounts[k] > 0);
+  const sData   = sLabels.map(k => statusCounts[k]);
+  const sColors = {
+    '未開始':'#d1d5db','進行中':'#3b82f6','完成':'#22c55e',
+    '擱置':'#eab308','二次進行中':'#ec4899','三次進行中':'#8b5cf6'
+  };
+
+  if (charts.status) charts.status.destroy();
+  charts.status = new Chart(document.getElementById('status-chart'), {
+    type: 'doughnut',
+    data: {
+      labels: sLabels,
+      datasets: [{ data: sData, backgroundColor: sLabels.map(l => sColors[l]), borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'IBM Plex Mono', size: 11 }, padding: 12, boxWidth: 10 } }
+      },
+      cutout: '65%',
+    }
+  });
+
+  // Progress bar chart
+  const pLabels = state.projects.map(p => p.name);
+  const pData   = state.projects.map(p => getProjectProgress(p.id));
+  const pColors = state.projects.map(p => p.color);
+
+  if (charts.progress) charts.progress.destroy();
+  charts.progress = new Chart(document.getElementById('progress-chart'), {
+    type: 'bar',
+    data: {
+      labels: pLabels,
+      datasets: [{ data: pData, backgroundColor: pColors, borderRadius: 3, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          max: 100, min: 0,
+          ticks: { callback: v => v+'%', font: { family:'IBM Plex Mono', size:10 } },
+          grid: { color:'#e5e7eb' }
+        },
+        y: { ticks: { font: { family:'IBM Plex Sans TC', size:12 } }, grid: { display:false } }
+      }
+    }
+  });
+}
+
+function getProjectProgress(pid) {
+  const tasks = state.tasks.filter(t => t.projectId === pid);
+  if (!tasks.length) return 0;
+  const done = tasks.filter(t => t.status === '完成').length;
+  return Math.round(done / tasks.length * 100);
+}
+
+// ─── PROJECT LIST ──────────────────────────────────────────
+function renderProjectList(containerId, withEditBtn) {
+  const container = document.getElementById(containerId);
+  if (!state.projects.length) {
+    container.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="15" x2="13" y2="15"/></svg>
+      尚無產品線。點擊「新增產品線」開始。
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = state.projects.map(p => {
+    const tasks = state.tasks.filter(t => t.projectId === p.id);
+    const done = tasks.filter(t => t.status === '完成').length;
+    const pct = tasks.length ? Math.round(done / tasks.length * 100) : 0;
+    const inpro = tasks.filter(t => ['進行中','二次進行中','三次進行中'].includes(t.status)).length;
+
+    return `
+    <div class="project-card" id="pcard-${p.id}">
+      <div class="project-header" onclick="toggleProject('${p.id}')">
+        <div class="project-color-bar" style="background:${p.color}"></div>
+        <div class="project-name">${p.name}</div>
+        <div class="project-meta">
+          ${p.owner ? `<span style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace">${p.owner}</span>` : ''}
+          <div class="project-progress-wrap">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:${pct}%;background:${p.color}"></div>
+            </div>
+            <span class="progress-pct">${pct}%</span>
+          </div>
+          <span class="task-count">${tasks.length} 任務 · ${inpro} 進行中</span>
+        </div>
+        <div class="expand-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="task-section">
+        <div class="task-toolbar">
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn-sm" onclick="addTask('${p.id}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新增任務
+            </button>
+            ${withEditBtn ? `<button class="btn-sm" onclick="deleteProject('${p.id}')">刪除產品線</button>` : ''}
+          </div>
+          <span style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace">${done}/${tasks.length} 完成</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>任務名稱</th>
+            <th>狀態</th>
+            <th>負責人</th>
+            <th>開始日期</th>
+            <th>截止日期</th>
+            <th>備註</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="tbody-${p.id}">
+            ${renderTaskRows(tasks)}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTaskRows(tasks) {
+  if (!tasks.length) return `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px;font-family:'IBM Plex Mono',monospace;font-size:12px">尚無任務</td></tr>`;
+  return tasks.map(t => taskRowHTML(t)).join('');
+}
+
+function taskRowHTML(t) {
+  const cfg = STATUS_CONFIG[t.status] || STATUS_CONFIG['未開始'];
+  const today = new Date(); today.setHours(0,0,0,0);
+  let dateCls = 'date-cell';
+  if (t.dueDate && t.status !== '完成') {
+    const d = new Date(t.dueDate);
+    if (d < today) dateCls += ' overdue';
+    else if ((d - today) / 86400000 <= 5) dateCls += ' soon';
+  }
+  return `<tr>
+    <td class="task-name-cell"><input class="task-name-input" value="${esc(t.name)}" onchange="updateTask('${t.id}','name',this.value)" placeholder="任務名稱"></td>
+    <td><button class="status-badge ${cfg.cls}" onclick="openStatusDropdown(event,'${t.id}')"><span class="status-dot"></span>${cfg.label}</button></td>
+    <td class="assignee-cell"><input class="assignee-input" value="${esc(t.assignee)}" onchange="updateTask('${t.id}','assignee',this.value)" placeholder="—"></td>
+    <td class="${dateCls}"><input type="date" value="${t.startDate}" onchange="updateTask('${t.id}','startDate',this.value)"></td>
+    <td class="${dateCls}"><input type="date" value="${t.dueDate}" onchange="updateTask('${t.id}','dueDate',this.value)"></td>
+    <td><textarea class="notes-input" onchange="updateTask('${t.id}','notes',this.value)" placeholder="備註">${esc(t.notes)}</textarea></td>
+    <td><button class="delete-btn" onclick="deleteTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td>
+  </tr>`;
+}
+
+function toggleProject(id) {
+  // Toggle in both lists
+  document.querySelectorAll(`#pcard-${id}`).forEach(card => {
+    card.classList.toggle('expanded');
+  });
+}
+
+// ─── ALL TASKS TABLE ───────────────────────────────────────
+let currentFilter = 'all';
+let currentSearch = '';
+
+function renderAllTasks() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  let tasks = [...state.tasks];
+
+  if (currentFilter !== 'all') {
+    if (currentFilter === 'overdue') {
+      tasks = tasks.filter(t => t.dueDate && t.status !== '完成' && new Date(t.dueDate) < today);
+    } else {
+      tasks = tasks.filter(t => t.status === currentFilter);
+    }
+  }
+
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    tasks = tasks.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      t.assignee.toLowerCase().includes(q) ||
+      t.notes.toLowerCase().includes(q)
+    );
+  }
+
+  const body = document.getElementById('all-tasks-body');
+  if (!tasks.length) {
+    body.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:32px;font-family:'IBM Plex Mono',monospace;font-size:12px">沒有符合條件的任務</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = tasks.map(t => {
+    const proj = state.projects.find(p => p.id === t.projectId);
+    const cfg = STATUS_CONFIG[t.status] || STATUS_CONFIG['未開始'];
+    let dateCls = 'date-cell';
+    if (t.dueDate && t.status !== '完成') {
+      const d = new Date(t.dueDate);
+      if (d < today) dateCls += ' overdue';
+      else if ((d - today) / 86400000 <= 5) dateCls += ' soon';
+    }
+    return `<tr>
+      <td class="task-name-cell"><input class="task-name-input" value="${esc(t.name)}" onchange="updateTask('${t.id}','name',this.value)" placeholder="任務名稱"></td>
+      <td>
+        ${proj ? `<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:${proj.color};flex-shrink:0;display:inline-block"></span>${proj.name}</span>` : '—'}
+      </td>
+      <td><button class="status-badge ${cfg.cls}" onclick="openStatusDropdown(event,'${t.id}')"><span class="status-dot"></span>${cfg.label}</button></td>
+      <td class="assignee-cell"><input class="assignee-input" value="${esc(t.assignee)}" onchange="updateTask('${t.id}','assignee',this.value)" placeholder="—"></td>
+      <td class="${dateCls}"><input type="date" value="${t.dueDate}" onchange="updateTask('${t.id}','dueDate',this.value)"></td>
+      <td style="font-size:12px;color:var(--text3)">${esc(t.notes)}</td>
+      <td><button class="delete-btn" onclick="deleteTask('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTasks(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderAllTasks();
+}
+
+function searchTasks(val) {
+  currentSearch = val;
+  renderAllTasks();
+}
+
+// ─── TIMELINE / GANTT ─────────────────────────────────────
+function renderTimeline() {
+  const container = document.getElementById('gantt-chart');
+  if (!state.tasks.length) {
+    container.innerHTML = '<div class="empty-state">尚無任務資料</div>';
+    return;
+  }
+
+  const allDates = state.tasks.flatMap(t => [t.startDate, t.dueDate]).filter(Boolean).map(d => new Date(d));
+  if (!allDates.length) { container.innerHTML = '<div class="empty-state">請為任務設定日期</div>'; return; }
+
+  const minDate = new Date(Math.min(...allDates));
+  const maxDate = new Date(Math.max(...allDates));
+  minDate.setDate(1);
+  maxDate.setMonth(maxDate.getMonth() + 1);
+  const totalDays = (maxDate - minDate) / 86400000;
+
+  // Month labels
+  const months = [];
+  let cur = new Date(minDate);
+  while (cur < maxDate) {
+    months.push(cur.toLocaleDateString('zh-TW', { month:'short', year:'numeric' }));
+    cur.setMonth(cur.getMonth() + 1);
+  }
+
+  let html = `<div class="gantt-header">
+    <div style="width:160px;flex-shrink:0"></div>
+    <div class="gantt-months">${months.map(m => `<div class="gantt-month">${m}</div>`).join('')}</div>
+  </div>`;
+
+  state.projects.forEach(p => {
+    const tasks = state.tasks.filter(t => t.projectId === p.id && t.startDate && t.dueDate);
+    if (!tasks.length) return;
+    html += `<div style="padding:6px 0;border-bottom:1px solid var(--border2)">
+      <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text2);letter-spacing:0.06em;text-transform:uppercase;padding:4px 0 8px;display:flex;align-items:center;gap:6px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0;display:inline-block"></span>${p.name}
+      </div>`;
+
+    tasks.forEach(t => {
+      const start = new Date(t.startDate);
+      const end   = new Date(t.dueDate);
+      const left  = Math.max(0, (start - minDate) / 86400000 / totalDays * 100);
+      const width = Math.max(0.5, (end - start) / 86400000 / totalDays * 100);
+      const cfg   = STATUS_CONFIG[t.status] || STATUS_CONFIG['未開始'];
+      const barColor = p.color;
+      const opacity = t.status === '完成' ? '0.4' : '1';
+
+      html += `<div class="gantt-row">
+        <div class="gantt-label" title="${esc(t.name)}">${esc(t.name)}</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="left:${left}%;width:${width}%;background:${barColor};opacity:${opacity}" title="${t.name} (${t.startDate} → ${t.dueDate}) · ${t.status}"></div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+// ─── ALERTS ───────────────────────────────────────────────
+function renderAlerts() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const overdue = state.tasks.filter(t => t.dueDate && t.status !== '完成' && new Date(t.dueDate) < today);
+  const soon    = state.tasks.filter(t => {
+    if (!t.dueDate || t.status === '完成') return false;
+    const diff = (new Date(t.dueDate) - today) / 86400000;
+    return diff >= 0 && diff <= 5;
+  });
+
+  let html = '';
+  if (overdue.length) {
+    html += `<div class="alert-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div><strong>${overdue.length} 個任務已逾期：</strong>${overdue.map(t => t.name).join('、')}</div>
+    </div>`;
+  }
+  if (soon.length) {
+    html += `<div class="alert-banner" style="background:#fffbeb;border-color:#fde68a;color:#92400e">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#d97706"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div><strong>${soon.length} 個任務即將截止（5天內）：</strong>${soon.map(t => t.name).join('、')}</div>
+    </div>`;
+  }
+  document.getElementById('alerts-section').innerHTML = html;
+}
+
+// ─── CRUD ──────────────────────────────────────────────────
+function addTask(projectId) {
+  const task = {
+    id: uid(),
+    projectId,
+    name: '',
+    status: '未開始',
+    assignee: '',
+    startDate: '',
+    dueDate: '',
+    notes: '',
+  };
+  state.tasks.push(task);
+  const tbody = document.getElementById('tbody-' + projectId);
+  if (tbody) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = taskRowHTML(task).replace(/^<tr>|<\/tr>$/g,'');
+    tbody.appendChild(tr);
+    const input = tr.querySelector('.task-name-input');
+    if (input) setTimeout(() => input.focus(), 50);
+  }
+  debounceSave();
+  renderStatCards();
+  renderCharts();
+}
+
+function updateTask(id, field, value) {
+  const task = state.tasks.find(t => t.id === id);
+  if (!task) return;
+  task[field] = value;
+  if (field === 'status') {
+    renderStatCards();
+    renderCharts();
+    renderAlerts();
+    renderAllTasks();
+  }
+  debounceSave();
+}
+
+function deleteTask(id) {
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  renderAll();
+  debounceSave();
+}
+
+function addProject() {
+  const name  = document.getElementById('new-project-name').value.trim();
+  const owner = document.getElementById('new-project-owner').value.trim();
+  if (!name) { toast('請輸入產品線名稱'); return; }
+  state.projects.push({ id: uid(), name, color: selectedColor, owner });
+  closeModal('modal-add-project');
+  document.getElementById('new-project-name').value = '';
+  document.getElementById('new-project-owner').value = '';
+  renderAll();
+  debounceSave();
+  toast('已新增產品線：' + name);
+}
+
+function deleteProject(id) {
+  if (!confirm('確定要刪除這個產品線及其所有任務？')) return;
+  state.projects = state.projects.filter(p => p.id !== id);
+  state.tasks    = state.tasks.filter(t => t.projectId !== id);
+  renderAll();
+  debounceSave();
+  toast('已刪除產品線');
+}
+
+// ─── STATUS DROPDOWN ──────────────────────────────────────
+function openStatusDropdown(e, taskId) {
+  e.stopPropagation();
+  statusDropTarget = taskId;
+  const dd = document.getElementById('status-dropdown');
+  dd.classList.add('open');
+  const rect = e.currentTarget.getBoundingClientRect();
+  dd.style.top  = (rect.bottom + 4) + 'px';
+  dd.style.left = rect.left + 'px';
+}
+
+function setStatus(status) {
+  if (!statusDropTarget) return;
+  updateTask(statusDropTarget, 'status', status);
+  // Re-render task rows
+  const task = state.tasks.find(t => t.id === statusDropTarget);
+  if (task) {
+    // Update badge in all visible rows
+    document.querySelectorAll(`[onclick*="openStatusDropdown"][onclick*="${statusDropTarget}"]`).forEach(btn => {
+      const cfg = STATUS_CONFIG[status];
+      btn.className = 'status-badge ' + cfg.cls;
+      btn.innerHTML = `<span class="status-dot"></span>${cfg.label}`;
+    });
+  }
+  closeStatusDropdown();
+  renderStatCards();
+  renderCharts();
+  renderAlerts();
+}
+
+function toggleAdvancedStatus(e) {
+  e.stopPropagation();
+  const adv = document.getElementById('status-advanced');
+  const toggle = document.querySelector('.status-advanced-toggle');
+  const isOpen = adv.style.display !== 'none';
+  adv.style.display = isOpen ? 'none' : 'block';
+  toggle.classList.toggle('open', !isOpen);
+}
+
+function closeStatusDropdown() {
+  document.getElementById('status-dropdown').classList.remove('open');
+  document.getElementById('status-advanced').style.display = 'none';
+  const toggle = document.querySelector('.status-advanced-toggle');
+  if (toggle) toggle.classList.remove('open');
+  statusDropTarget = null;
+}
+
+document.addEventListener('click', () => closeStatusDropdown());
+
+// ─── MODALS ───────────────────────────────────────────────
+function openAddProject() {
+  // Render color picker
+  const row = document.getElementById('color-picker');
+  row.innerHTML = PROJECT_COLORS.map(c =>
+    `<div class="color-dot ${c===selectedColor?'selected':''}" style="background:${c}" onclick="selectColor('${c}',this)"></div>`
+  ).join('');
+  document.getElementById('modal-add-project').classList.add('open');
+}
+
+function selectColor(color, el) {
+  selectedColor = color;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ─── TABS ──────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  ['overview','projects','tasks','timeline'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+// ─── EXPORT ───────────────────────────────────────────────
+function exportData() {
+  const rows = [['產品線','任務名稱','狀態','負責人','開始日期','截止日期','備註']];
+  state.tasks.forEach(t => {
+    const proj = state.projects.find(p => p.id === t.projectId);
+    rows.push([proj?.name||'', t.name, t.status, t.assignee, t.startDate, t.dueDate, t.notes]);
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sheet-pm-export.csv';
+  a.click();
+  toast('已匯出 CSV');
+}
+
+// ─── UTILS ────────────────────────────────────────────────
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let saveTimer;
+function debounceSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => writeToSheet(), 1500);
+}
+
+function show(id) {
+  const el = document.getElementById(id);
+  // login-screen and file-screen use flex centering; app uses flex column
+  const flexIds = ['login-screen','file-screen','app'];
+  el.style.display = flexIds.includes(id) ? 'flex' : 'block';
+}
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+function showLoading(msg) {
+  document.getElementById('loading-text').textContent = msg || '載入中...';
+  document.getElementById('loading').classList.add('visible');
+}
+
+function hideLoading() {
+  document.getElementById('loading').classList.remove('visible');
+}
+
+function toast(msg) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+// ─── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Check OAuth callback
+  if (window.location.hash.includes('access_token')) {
+    handleOAuthCallback();
+    return;
+  }
+  // Check stored token
+  const stored = sessionStorage.getItem('access_token');
+  if (stored) {
+    state.accessToken = stored;
+    fetchUserInfo();
+    return;
+  }
+  // Show login
+  show('login-screen');
+});
+</script>
+
+<!-- ─── SETUP GUIDE (shown at bottom for developers) ─────────────────────── -->
+<div style="display:none" id="setup-guide">
+<!-- 
+=============================================================
+  SHEET PM — 開發者設定指南
+=============================================================
+
+1. Google Cloud Console 設定
+   ─────────────────────────
+   a. 前往 https://console.cloud.google.com
+   b. 建立新專案
+   c. 啟用以下 API：
+      - Google Sheets API
+      - Google Drive API  
+      - Google OAuth 2.0
+   d. 建立 OAuth 2.0 憑證（Web Application 類型）
+   e. 在「授權的 JavaScript 來源」填入你的網域
+      (本機開發填 http://localhost)
+   f. 複製 Client ID
+
+2. 設定 Client ID
+   ─────────────
+   在本檔案頂端的 <script> 區塊找到：
+   const GOOGLE_CLIENT_ID = '226321321683-pv0unefg7ckmf91eeeif48hm6vhtf82o.apps.googleusercontent.com';
+   替換為你的實際 Client ID
+
+3. Google Sheets 模板格式
+   ──────────────────────
+   你的 Google Sheets 需要包含兩個工作表頁籤：
+   
+   「Projects」頁籤（欄位順序）：
+   id | name | color | owner
+   
+   「Tasks」頁籤（欄位順序）：
+   id | projectId | name | status | assignee | startDate | dueDate | notes
+   
+   status 可填：未開始、進行中、完成、擱置、二次進行中、三次進行中
+   color  格式：#2563eb（十六進位色碼）
+   date   格式：YYYY-MM-DD
+   
+   ⬇ 點此複製預設模板（填入 Client ID 後可直接使用）：
+   https://docs.google.com/spreadsheets/d/TEMPLATE_ID/copy
+
+4. 部署方式
+   ────────
+   - 本機：直接用瀏覽器開啟此 HTML 檔案
+   - GitHub Pages：上傳到 repo，啟用 Pages
+   - Netlify / Vercel：拖曳 HTML 檔案上傳
+   
+   注意：OAuth 需要 HTTPS，本機開發用 localhost 即可
+
+=============================================================
+-->
+</div>
+
+</body>
+</html>
