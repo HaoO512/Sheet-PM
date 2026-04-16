@@ -1346,10 +1346,6 @@ tr:hover .delete-btn { opacity: 1; }
       </div>
     </div>
     <div class="or-divider">或</div>
-    <button class="btn-primary" onclick="openDrivePicker()" style="width:100%">
-      從 Google Drive 選取
-    </button>
-    <div class="or-divider">或</div>
     <div class="or-divider">或</div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn-primary" onclick="createTemplateSheet()" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;gap:8px">
@@ -1675,10 +1671,7 @@ async function loadFromUrl() {
   launchApp();
 }
 
-function openDrivePicker() {
-  if (!state.accessToken) { toast('請先登入'); return; }
-  toast('💡 目前請貼上 Sheets 網址，Drive Picker 需要額外 API Key 設定');
-}
+
 
 function switchSheet() {
   show('file-screen');
