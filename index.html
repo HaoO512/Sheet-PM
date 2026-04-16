@@ -1509,7 +1509,7 @@ function signIn() {
   }
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: window.location.origin + window.location.pathname,
+    redirect_uri: window.location.origin + window.location.pathname.replace(/\/index\.html$/, '/').replace(/([^/])$/, '$1/'),
     response_type: 'token',
     scope: SCOPES,
     state: 'signin',
