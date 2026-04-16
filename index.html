@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sheet PM — 專案管理看板</title>
+<title>Fenzo Home PM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
@@ -1063,6 +1063,97 @@ tr:hover .delete-btn { opacity: 1; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+
+/* ─── OVERVIEW TASK LISTS ─── */
+.overview-tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .overview-tasks-grid { grid-template-columns: 1fr; }
+}
+
+.ov-task-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ov-task-item {
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ov-task-item:last-child { border-bottom: none; }
+
+.ov-task-name {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.ov-task-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text3);
+}
+
+.ov-task-meta .proj-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ov-empty {
+  padding: 24px 20px;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text3);
+  text-align: center;
+}
+
+/* ─── GANTT LEGEND ─── */
+.gantt-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2);
+}
+
+.gantt-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gantt-legend-bar {
+  width: 20px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.gantt-note {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text3);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
 /* ─── LOADING ─── */
 .loading-overlay {
   position: fixed;
@@ -1209,7 +1300,7 @@ tr:hover .delete-btn { opacity: 1; }
 <div id="login-screen">
   <div class="login-card">
     <div class="login-brand">
-      <h1>Sheet PM</h1>
+      <h1>Fenzo Home PM</h1>
       <p>以 Google Sheets 為核心的專案管理看板</p>
     </div>
     <div class="login-divider"></div>
@@ -1281,7 +1372,7 @@ tr:hover .delete-btn { opacity: 1; }
 <div id="app">
   <header class="app-header">
     <div class="header-left">
-      <div class="app-logo">Sheet PM</div>
+      <div class="app-logo">Fenzo Home PM</div>
       <div class="sheet-badge" id="sheet-badge" onclick="switchSheet()" title="點擊切換檔案">—</div>
     </div>
     <div class="header-right">
@@ -1328,10 +1419,20 @@ tr:hover .delete-btn { opacity: 1; }
         </div>
       </div>
     </div>
-    <div class="section-header">
-      <div class="section-title">產品線一覽</div>
+    <div class="overview-tasks-grid">
+      <div class="chart-card" style="padding:0;overflow:hidden">
+        <div class="chart-title" style="padding:16px 20px 12px;border-bottom:1px solid var(--border);margin:0">🔵 進行中任務</div>
+        <div id="ov-inprogress" class="ov-task-list"></div>
+      </div>
+      <div class="chart-card" style="padding:0;overflow:hidden">
+        <div class="chart-title" style="padding:16px 20px 12px;border-bottom:1px solid var(--border);margin:0;color:#d97706">⏰ 即將截止（5天內）</div>
+        <div id="ov-soon" class="ov-task-list"></div>
+      </div>
+      <div class="chart-card" style="padding:0;overflow:hidden">
+        <div class="chart-title" style="padding:16px 20px 12px;border-bottom:1px solid var(--border);margin:0;color:var(--warn)">⚠ 逾期任務</div>
+        <div id="ov-overdue" class="ov-task-list"></div>
+      </div>
     </div>
-    <div class="project-list" id="overview-project-list"></div>
   </div>
 
   <!-- PROJECTS TAB -->
@@ -1810,10 +1911,44 @@ function launchApp() {
   renderAll();
 }
 
+function renderOverviewTasks() {
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const inprogress = state.tasks.filter(t => ['進行中','二次進行中','三次進行中'].includes(t.status));
+  const soon = state.tasks.filter(t => {
+    if (!t.dueDate || t.status === '完成') return false;
+    const diff = (new Date(t.dueDate) - today) / 86400000;
+    return diff >= 0 && diff <= 5;
+  });
+  const overdue = state.tasks.filter(t => {
+    if (!t.dueDate || t.status === '完成') return false;
+    return new Date(t.dueDate) < today;
+  });
+
+  function taskHTML(t) {
+    const proj = state.projects.find(p => p.id === t.projectId);
+    const dueStr = t.dueDate ? t.dueDate.replace(/-/g, '/') : '';
+    return `<div class="ov-task-item">
+      <div class="ov-task-name">${esc(t.name)}</div>
+      <div class="ov-task-meta">
+        ${proj ? `<span class="proj-dot" style="background:${proj.color}"></span><span>${proj.name}</span>` : ''}
+        ${t.assignee ? `<span>· ${esc(t.assignee)}</span>` : ''}
+        ${dueStr ? `<span>· ${dueStr}</span>` : ''}
+      </div>
+    </div>`;
+  }
+
+  const emptyHTML = `<div class="ov-empty">—</div>`;
+
+  document.getElementById('ov-inprogress').innerHTML = inprogress.length ? inprogress.map(taskHTML).join('') : emptyHTML;
+  document.getElementById('ov-soon').innerHTML     = soon.length     ? soon.map(taskHTML).join('')     : emptyHTML;
+  document.getElementById('ov-overdue').innerHTML  = overdue.length  ? overdue.map(taskHTML).join('')  : emptyHTML;
+}
+
 function renderAll() {
   renderStatCards();
   renderCharts();
-  renderProjectList('overview-project-list', false);
+  renderOverviewTasks();
   renderProjectList('projects-list', true);
   renderAllTasks();
   renderTimeline();
@@ -2107,9 +2242,19 @@ function renderTimeline() {
     cur.setMonth(cur.getMonth() + 1);
   }
 
-  let html = `<div class="gantt-header">
+  let html = `
+  <div class="gantt-note">
+    每一條橫條代表一個任務的時間區間（開始日期 → 截止日期）。<br>
+    顏色對應產品線，<strong>透明度較低</strong>表示已完成，懸停橫條可查看詳細資訊。<br>
+    只有<strong>同時填寫開始日期與截止日期</strong>的任務才會顯示。
+  </div>
+  <div class="gantt-legend">
+    ${state.projects.map(p => `<div class="gantt-legend-item"><div class="gantt-legend-bar" style="background:${p.color}"></div>${p.name}</div>`).join('')}
+    <div class="gantt-legend-item"><div class="gantt-legend-bar" style="background:#aaa;opacity:0.4"></div>已完成</div>
+  </div>
+  <div class="gantt-header">
     <div style="width:160px;flex-shrink:0"></div>
-    <div class="gantt-months">${months.map(m => `<div class="gantt-month">${m}</div>`).join('')}</div>
+    <div class="gantt-months">\${months.map(m => `<div class="gantt-month">\${m}</div>`).join('')}</div>
   </div>`;
 
   state.projects.forEach(p => {
