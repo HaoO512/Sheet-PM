@@ -2234,20 +2234,15 @@ function renderTimeline() {
     cur.setMonth(cur.getMonth() + 1);
   }
 
-  let html = `
-  <div class="gantt-note">
-    每一條橫條代表一個任務的時間區間（開始日期 → 截止日期）。<br>
-    顏色對應產品線，<strong>透明度較低</strong>表示已完成，懸停橫條可查看詳細資訊。<br>
-    只有<strong>同時填寫開始日期與截止日期</strong>的任務才會顯示。
-  </div>
-  <div class="gantt-legend">
-    ${state.projects.map(p => `<div class="gantt-legend-item"><div class="gantt-legend-bar" style="background:${p.color}"></div>${p.name}</div>`).join('')}
-    <div class="gantt-legend-item"><div class="gantt-legend-bar" style="background:#aaa;opacity:0.4"></div>已完成</div>
-  </div>
-  <div class="gantt-header">
-    <div style="width:160px;flex-shrink:0"></div>
-    <div class="gantt-months">\${months.map(m => `<div class="gantt-month">\${m}</div>`).join('')}</div>
-  </div>`;
+  const legendItems = state.projects.map(p =>
+    '<div class="gantt-legend-item"><div class="gantt-legend-bar" style="background:' + p.color + '"></div>' + p.name + '</div>'
+  ).join('') + '<div class="gantt-legend-item"><div class="gantt-legend-bar" style="background:#aaa;opacity:0.4"></div>已完成</div>';
+
+  const monthsHTML = months.map(m => '<div class="gantt-month">' + m + '</div>').join('');
+
+  let html = '<div class="gantt-note">每一條橫條代表一個任務的時間區間（開始日期 → 截止日期）。顏色對應產品線，已完成任務顯示為半透明。只有同時填寫開始日期與截止日期的任務才會顯示。</div>'
+    + '<div class="gantt-legend">' + legendItems + '</div>'
+    + '<div class="gantt-header"><div style="width:160px;flex-shrink:0"></div><div class="gantt-months">' + monthsHTML + '</div></div>';
 
   state.projects.forEach(p => {
     const tasks = state.tasks.filter(t => t.projectId === p.id && t.startDate && t.dueDate);
