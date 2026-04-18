@@ -1749,22 +1749,35 @@ function signIn(silent = false) {
     response_type: 'token',
     scope: SCOPES,
     include_granted_scopes: 'true',
-    prompt: silent ? 'none' : 'select_account',
   });
+  // Only add prompt=none for silent refresh; omit entirely for normal login
+  if (silent) params.set('prompt', 'none');
   window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
 }
 
 function handleOAuthCallback() {
   const hash = window.location.hash.substring(1);
   const params = new URLSearchParams(hash);
+  const error = params.get('error');
   const token = params.get('access_token');
   const expiresIn = parseInt(params.get('expires_in') || '3600');
+
+  window.history.replaceState(null, '', window.location.pathname);
+
+  if (error) {
+    // Silent refresh failed (user needs to re-consent) — show login screen
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('token_expiry');
+    show('login-screen');
+    hide('loading');
+    return;
+  }
+
   if (token) {
     state.accessToken = token;
-    const expiry = Date.now() + (expiresIn - 120) * 1000; // 2min buffer
+    const expiry = Date.now() + (expiresIn - 120) * 1000;
     sessionStorage.setItem('access_token', token);
     sessionStorage.setItem('token_expiry', String(expiry));
-    window.history.replaceState(null, '', window.location.pathname);
     scheduleRefresh(expiresIn);
     fetchUserInfo();
   }
@@ -2687,8 +2700,8 @@ function toast(msg) {
 
 // ─── INIT ──────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  // Check OAuth callback first
-  if (window.location.hash.includes('access_token')) {
+  // Check OAuth callback (both success token and error from silent refresh)
+  if (window.location.hash.includes('access_token') || window.location.hash.includes('error=')) {
     handleOAuthCallback();
     return;
   }
@@ -2702,10 +2715,16 @@ window.addEventListener('DOMContentLoaded', () => {
     fetchUserInfo();
     return;
   }
-  // Token expired or missing — clear and show login
+  // Token missing or expired — try silent refresh
   sessionStorage.removeItem('access_token');
   sessionStorage.removeItem('token_expiry');
-  show('login-screen');
+  if (stored) {
+    // Had a token before, try silent first
+    signIn(true);
+  } else {
+    // Never logged in, show login screen
+    show('login-screen');
+  }
 });
 </script>
 
