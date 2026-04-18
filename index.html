@@ -1654,12 +1654,10 @@ const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googlea
 // ─── TOKEN MANAGEMENT ──────────────────────────────────────
 let tokenRefreshTimer = null;
 
-function scheduleRefresh() {
+function scheduleRefresh(expiresIn = 3600) {
   clearTimeout(tokenRefreshTimer);
-  // Refresh 5 min before expiry (token lasts 1hr, refresh at 55min)
-  tokenRefreshTimer = setTimeout(() => {
-    signIn(true); // silent re-login
-  }, 55 * 60 * 1000);
+  const refreshIn = Math.max((expiresIn - 120) * 1000, 0);
+  tokenRefreshTimer = setTimeout(() => signIn(true), refreshIn);
 }
 
 // Central fetch wrapper — redirect to login on 401
@@ -1667,8 +1665,11 @@ async function apiFetch(url, options = {}) {
   const res = await fetch(url, options);
   if (res.status === 401) {
     sessionStorage.removeItem('access_token');
-    signIn();
-    throw new Error('401 - redirecting to login');
+    sessionStorage.removeItem('token_expiry');
+    clearTimeout(tokenRefreshTimer);
+    toast('⚠ 登入已過期，重新登入中...');
+    setTimeout(() => signIn(true), 1500);
+    throw new Error('401');
   }
   return res;
 }
@@ -1748,8 +1749,8 @@ function signIn(silent = false) {
     response_type: 'token',
     scope: SCOPES,
     include_granted_scopes: 'true',
+    prompt: silent ? 'none' : 'select_account',
   });
-  if (silent) params.set('prompt', 'none');
   window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
 }
 
@@ -1757,11 +1758,14 @@ function handleOAuthCallback() {
   const hash = window.location.hash.substring(1);
   const params = new URLSearchParams(hash);
   const token = params.get('access_token');
+  const expiresIn = parseInt(params.get('expires_in') || '3600');
   if (token) {
     state.accessToken = token;
+    const expiry = Date.now() + (expiresIn - 120) * 1000; // 2min buffer
     sessionStorage.setItem('access_token', token);
+    sessionStorage.setItem('token_expiry', String(expiry));
     window.history.replaceState(null, '', window.location.pathname);
-    scheduleRefresh();
+    scheduleRefresh(expiresIn);
     fetchUserInfo();
   }
 }
@@ -2688,15 +2692,19 @@ window.addEventListener('DOMContentLoaded', () => {
     handleOAuthCallback();
     return;
   }
-  // Check stored token
+  // Check stored token with expiry
   const stored = sessionStorage.getItem('access_token');
-  if (stored) {
+  const expiry = parseInt(sessionStorage.getItem('token_expiry') || '0');
+  if (stored && Date.now() < expiry) {
     state.accessToken = stored;
-    scheduleRefresh();
+    const remaining = Math.floor((expiry - Date.now()) / 1000);
+    scheduleRefresh(remaining);
     fetchUserInfo();
     return;
   }
-  // Show login
+  // Token expired or missing — clear and show login
+  sessionStorage.removeItem('access_token');
+  sessionStorage.removeItem('token_expiry');
   show('login-screen');
 });
 </script>
