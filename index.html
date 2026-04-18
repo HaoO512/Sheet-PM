@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
 :root {
@@ -1650,6 +1651,60 @@ tr:hover .delete-btn { opacity: 1; }
 // See README for instructions: https://github.com/your-repo/sheet-pm
 const GOOGLE_CLIENT_ID = '226321321683-pv0unefg7ckmf91eeeif48hm6vhtf82o.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
+
+// ─── GOOGLE IDENTITY SERVICES ─────────────────────────────
+let tokenClient = null;
+let tokenRefreshTimer = null;
+
+function initGIS() {
+  if (!window.google) { setTimeout(initGIS, 200); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp.error) { toast('⚠ 登入失敗：' + resp.error); return; }
+      state.accessToken = resp.access_token;
+      sessionStorage.setItem('access_token', resp.access_token);
+      // Schedule silent refresh at 45 min
+      clearTimeout(tokenRefreshTimer);
+      tokenRefreshTimer = setTimeout(() => silentRefresh(), 45 * 60 * 1000);
+      if (!state.user) fetchUserInfo();
+    },
+  });
+}
+
+function silentRefresh() {
+  if (!tokenClient) return;
+  // prompt:'' means silent — no popup if already consented
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+// Central fetch wrapper — silent refresh on 401
+async function apiFetch(url, options = {}) {
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    // Try silent refresh first
+    return new Promise((resolve, reject) => {
+      if (!tokenClient) { reject(new Error('401')); return; }
+      const origCallback = tokenClient.callback;
+      tokenClient.callback = async (resp) => {
+        tokenClient.callback = origCallback;
+        if (resp.error) { reject(new Error('401')); return; }
+        state.accessToken = resp.access_token;
+        sessionStorage.setItem('access_token', resp.access_token);
+        // Retry original request with new token
+        const newOpts = { ...options };
+        if (newOpts.headers) {
+          newOpts.headers = { ...newOpts.headers, 'Authorization': 'Bearer ' + resp.access_token };
+        }
+        try { resolve(await fetch(url, newOpts)); }
+        catch(e) { reject(e); }
+      };
+      tokenClient.requestAccessToken({ prompt: '' });
+    });
+  }
+  return res;
+}
 // 預設 Sheets 檔案 ID — 登入後自動載入，留空則顯示選擇畫面
 const DEFAULT_SHEET_ID = '1h6FwNcLRqfQiBSJzKTMZvjfxGBPWIikMc8R-WiXeajY';
 
@@ -1719,31 +1774,17 @@ function signIn() {
     toast('⚠ 請先在程式碼中設定 GOOGLE_CLIENT_ID');
     return;
   }
-  const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: window.location.origin + window.location.pathname.replace(/\/index\.html$/, '/').replace(/([^/])$/, '$1/'),
-    response_type: 'token',
-    scope: SCOPES,
-    state: 'signin',
-  });
-  window.location.href = 'https://accounts.google.com/o/oauth2/auth?' + params;
+  if (!tokenClient) { initGIS(); setTimeout(signIn, 300); return; }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
 function handleOAuthCallback() {
-  const hash = window.location.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  const token = params.get('access_token');
-  if (token) {
-    state.accessToken = token;
-    sessionStorage.setItem('access_token', token);
-    window.history.replaceState(null, '', window.location.pathname);
-    fetchUserInfo();
-  }
+  // Legacy — no longer used with GIS
 }
 
 async function fetchUserInfo() {
   try {
-    const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    const r = await apiFetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: 'Bearer ' + state.accessToken }
     });
     const data = await r.json();
@@ -1821,7 +1862,7 @@ async function createTemplateSheet() {
     };
 
     // 1. Create spreadsheet
-    const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+    const createRes = await apiFetch('https://sheets.googleapis.com/v4/spreadsheets', {
       method: 'POST', headers,
       body: JSON.stringify({
         properties: { title: 'Sheet PM 專案模板' },
@@ -1917,16 +1958,16 @@ async function loadSheetData() {
     const headers = { Authorization: 'Bearer ' + state.accessToken };
 
     // Get sheet metadata
-    const meta = await (await fetch(base, { headers })).json();
+    const meta = await (await apiFetch(base, { headers })).json();
     state.sheetName = meta.properties?.title || 'Untitled';
 
     // Read projects sheet
-    const projRes = await fetch(`${base}/values/Projects?majorDimension=ROWS`, { headers });
+    const projRes = await apiFetch(`${base}/values/Projects?majorDimension=ROWS`, { headers });
     const projData = await projRes.json();
     parseProjects(projData.values || []);
 
     // Read tasks sheet
-    const taskRes = await fetch(`${base}/values/Tasks?majorDimension=ROWS`, { headers });
+    const taskRes = await apiFetch(`${base}/values/Tasks?majorDimension=ROWS`, { headers });
     const taskData = await taskRes.json();
     parseTasks(taskData.values || []);
 
@@ -1965,10 +2006,7 @@ function parseTasks(rows) {
 }
 
 async function writeToSheet() {
-  if (state.isDemo) {
-    toast('示範模式：變更不會儲存到 Sheets');
-    return;
-  }
+  if (state.isDemo) { return; }
   if (!state.accessToken || !state.spreadsheetId) return;
 
   const base = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheetId}/values`;
@@ -1989,18 +2027,38 @@ async function writeToSheet() {
     ...state.tasks.map(t => [t.id, t.projectId, t.name, t.status, t.assignee, t.startDate, t.dueDate, t.notes])
   ];
 
-  await fetch(`${base}/Projects?valueInputOption=RAW`, {
-    method: 'PUT', headers,
-    body: JSON.stringify({ values: projValues })
-  });
+  try {
+    const r1 = await apiFetch(`${base}/Projects?valueInputOption=RAW`, {
+      method: 'PUT', headers,
+      body: JSON.stringify({ values: projValues })
+    });
+    const r2 = await apiFetch(`${base}/Tasks?valueInputOption=RAW`, {
+      method: 'PUT', headers,
+      body: JSON.stringify({ values: taskValues })
+    });
 
-  await fetch(`${base}/Tasks?valueInputOption=RAW`, {
-    method: 'PUT', headers,
-    body: JSON.stringify({ values: taskValues })
-  });
+    if (!r1.ok || !r2.ok) {
+      const err = await (r1.ok ? r2 : r1).json();
+      const msg = err?.error?.message || '未知錯誤';
+      const status = r1.ok ? r2.status : r1.status;
+      if (status === 401) {
+        toast('⚠ 登入已過期，請重新整理頁面並重新登入');
+      } else if (status === 403) {
+        toast('⚠ 沒有寫入權限，請確認 Sheets 共用設定');
+      } else {
+        toast('⚠ 儲存失敗：' + msg);
+      }
+      console.error('writeToSheet error:', status, msg);
+      return;
+    }
 
-  state.lastSync = new Date();
-  updateSyncTime();
+    state.lastSync = new Date();
+    updateSyncTime();
+    toast('✓ 已儲存');
+  } catch(e) {
+    console.error('writeToSheet exception:', e);
+    toast('⚠ 網路錯誤，儲存失敗');
+  }
 }
 
 async function refreshData() {
@@ -2641,16 +2699,16 @@ function toast(msg) {
 
 // ─── INIT ──────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  // Check OAuth callback
-  if (window.location.hash.includes('access_token')) {
-    handleOAuthCallback();
-    return;
-  }
-  // Check stored token
+  // Init GIS early
+  initGIS();
+
+  // Check stored token (still valid within session)
   const stored = sessionStorage.getItem('access_token');
   if (stored) {
     state.accessToken = stored;
     fetchUserInfo();
+    // Schedule silent refresh
+    tokenRefreshTimer = setTimeout(() => silentRefresh(), 45 * 60 * 1000);
     return;
   }
   // Show login
