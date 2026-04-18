@@ -57,7 +57,7 @@ body {
 }
 
 /* ─── LOGIN SCREEN ─── */
-#login-screen {
+#login-screen, #setup-screen {
   min-height: 100vh;
   display: none;
   flex-direction: column;
@@ -1415,69 +1415,31 @@ tr:hover .delete-btn { opacity: 1; }
 
 <body>
 
-<!-- ─── LOGIN ─── -->
-<div id="login-screen">
+<!-- ─── SETUP SCREEN ─── -->
+<div id="setup-screen">
   <div class="login-card">
     <div class="login-brand">
       <h1>Fenzo Home PM</h1>
-      <p>以 Google Sheets 為核心的專案管理看板</p>
+      <p>貼上 Google Apps Script 網址以開始使用</p>
     </div>
     <div class="login-divider"></div>
     <div class="login-section">
-      <label>使用 Google 帳戶登入以存取你的 Sheets</label>
-      <button class="btn-google" onclick="signIn()">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        使用 Google 帳戶登入
+      <label>Apps Script 網址</label>
+      <input type="text" id="api-url-input" class="form-input"
+        placeholder="https://script.google.com/macros/s/..."
+        style="font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:6px">
+      <button class="btn-google" onclick="connectSheet()" style="margin-top:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        連接 Sheets
       </button>
     </div>
     <div class="or-divider">或</div>
-    <div class="login-section">
-      <label>不需要帳戶，使用示範資料</label>
-      <button class="btn-demo" onclick="loadDemo()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14,2 14,8 20,8"/>
-        </svg>
-        載入示範資料
-      </button>
-    </div>
-    <div class="login-note">登入後，你的資料存放於 Google Sheets，本應用程式不儲存任何資料</div>
+    <button class="btn-demo" onclick="loadDemo()">載入示範資料</button>
+    <div class="login-note">網址只存在本機，不會傳送到任何伺服器</div>
   </div>
 </div>
 
-<!-- ─── FILE PICKER ─── -->
-<div id="file-screen">
-  <div class="file-card">
-    <div>
-      <h2>選擇 Google Sheets 檔案</h2>
-      <p style="margin-top:6px">貼上你的 Google Sheets 網址，或從 Drive 選取</p>
-    </div>
-    <div class="form-group">
-      <label>Sheets 網址</label>
-      <div class="url-input-row">
-        <input type="text" id="sheet-url-input" placeholder="https://docs.google.com/spreadsheets/d/...">
-        <button class="btn-primary" onclick="loadFromUrl()">載入</button>
-      </div>
-    </div>
-    <div class="or-divider">或</div>
-    <button class="btn-primary" onclick="createTemplateSheet()" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;gap:8px">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      在 Google Drive 建立新模板
-    </button>
-    <div class="or-divider">或</div>
-    <button class="btn-demo" onclick="loadDemo()" style="width:100%">預覽示範資料</button>
-    <div style="display:flex; justify-content:flex-end;">
-      <button class="btn-cancel" onclick="signOut()">登出</button>
-    </div>
-  </div>
-</div>
-
-<!-- ─── MAIN APP ─── -->
+<!-- ─── MAIN APP ─── --><!-- ─── MAIN APP ─── -->
 <div id="app">
   <header class="app-header">
     <div class="header-left">
@@ -1646,54 +1608,19 @@ tr:hover .delete-btn { opacity: 1; }
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
-// SETUP: Replace with your Google Cloud OAuth Client ID
-// See README for instructions: https://github.com/your-repo/sheet-pm
-const GOOGLE_CLIENT_ID = '226321321683-pv0unefg7ckmf91eeeif48hm6vhtf82o.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
-
-// ─── TOKEN MANAGEMENT ──────────────────────────────────────
-let tokenRefreshTimer = null;
-
-function scheduleRefresh(expiresIn = 3600) {
-  clearTimeout(tokenRefreshTimer);
-  const refreshIn = Math.max((expiresIn - 120) * 1000, 0);
-  tokenRefreshTimer = setTimeout(() => signIn(true), refreshIn);
-}
-
-// Central fetch wrapper — redirect to login on 401
-async function apiFetch(url, options = {}) {
-  const res = await fetch(url, options);
-  if (res.status === 401) {
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('token_expiry');
-    clearTimeout(tokenRefreshTimer);
-    toast('⚠ 登入已過期，重新登入中...');
-    setTimeout(() => signIn(true), 1500);
-    throw new Error('401');
-  }
-  return res;
-}
-// 預設 Sheets 檔案 ID — 登入後自動載入，留空則顯示選擇畫面
-const DEFAULT_SHEET_ID = '1h6FwNcLRqfQiBSJzKTMZvjfxGBPWIikMc8R-WiXeajY';
+// 你的 Apps Script Web App 網址（留空則每次啟動顯示設定畫面）
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbzOy7DXSv_example/exec';
 
 // ─── STATE ────────────────────────────────────────────────
 let state = {
-  user: null,
-  accessToken: null,
-  spreadsheetId: null,
-  sheetName: null,
-  projects: [],    // [{id, name, color, owner}]
-  tasks: [],       // [{id, projectId, name, status, assignee, startDate, dueDate, notes}]
+  apiUrl: null,
+  projects: [],
+  tasks: [],
   isDemo: false,
   lastSync: null,
-  pendingChanges: [],
+  sheetName: 'Fenzo Home PM',
 };
 
-let statusDropTarget = null;
-let selectedColor = '#2563eb';
-let charts = {};
-
-// ─── STATUS CONFIG ────────────────────────────────────────
 const STATUS_CONFIG = {
   '未開始':    { cls: 's-none',     label: '未開始' },
   '進行中':    { cls: 's-progress', label: '進行中' },
@@ -1708,378 +1635,138 @@ const PROJECT_COLORS = [
   '#7c3aed','#0891b2','#be185d','#374151',
 ];
 
-// ─── DEMO DATA ────────────────────────────────────────────
 const DEMO_DATA = {
-  sheetName: 'Sheet PM 示範',
+  sheetName: '示範資料',
   projects: [
-    { id: 'p1', name: 'P2 台燈',  color: '#2563eb', owner: 'Hiro' },
-    { id: 'p2', name: 'P3 托盤',  color: '#16a34a', owner: 'Mille' },
-    { id: 'p3', name: 'P4 筆架',  color: '#d97706', owner: 'Hiro' },
-    { id: 'p4', name: 'P5 香坐',  color: '#7c3aed', owner: 'Mille' },
+    { id:'p1', name:'P2 台燈',  color:'#2563eb', owner:'Hiro' },
+    { id:'p2', name:'P3 托盤',  color:'#16a34a', owner:'Mille' },
+    { id:'p3', name:'P4 筆架',  color:'#d97706', owner:'Hiro' },
+    { id:'p4', name:'P5 香坐',  color:'#7c3aed', owner:'Mille' },
   ],
   tasks: [
-    { id:'t1',  projectId:'p1', name:'矽膠模具開模',      status:'完成',      assignee:'Hiro',  startDate:'2025-02-01', dueDate:'2025-03-01', notes:'雙截面翻模' },
-    { id:'t2',  projectId:'p1', name:'礦物樹脂配方測試',  status:'完成',      assignee:'Hiro',  startDate:'2025-03-01', dueDate:'2025-03-20', notes:'' },
-    { id:'t3',  projectId:'p1', name:'比例修正',          status:'進行中',    assignee:'Hiro',  startDate:'2025-03-20', dueDate:'2025-04-20', notes:'高寬比需調整' },
-    { id:'t4',  projectId:'p1', name:'燈罩材質確認',      status:'未開始',    assignee:'Hiro',  startDate:'2025-04-20', dueDate:'2025-05-10', notes:'' },
-    { id:'t5',  projectId:'p1', name:'電料選型',          status:'未開始',    assignee:'Hiro',  startDate:'2025-04-25', dueDate:'2025-05-15', notes:'' },
-    { id:'t6',  projectId:'p2', name:'設計定稿',          status:'完成',      assignee:'Hiro',  startDate:'2025-02-15', dueDate:'2025-03-10', notes:'' },
-    { id:'t7',  projectId:'p2', name:'材料採購',          status:'進行中',    assignee:'Mille', startDate:'2025-03-10', dueDate:'2025-04-01', notes:'等供應商報價' },
-    { id:'t8',  projectId:'p2', name:'樣品製作',          status:'未開始',    assignee:'Hiro',  startDate:'2025-04-01', dueDate:'2025-04-25', notes:'' },
-    { id:'t9',  projectId:'p2', name:'品牌攝影',          status:'未開始',    assignee:'Mille', startDate:'2025-04-25', dueDate:'2025-05-10', notes:'' },
-    { id:'t10', projectId:'p3', name:'草稿設計',          status:'二次進行中',assignee:'Hiro',  startDate:'2025-03-01', dueDate:'2025-03-25', notes:'第一版比例不對' },
-    { id:'t11', projectId:'p3', name:'3D 建模',           status:'進行中',    assignee:'Hiro',  startDate:'2025-03-25', dueDate:'2025-04-20', notes:'' },
-    { id:'t12', projectId:'p3', name:'打樣',              status:'未開始',    assignee:'Hiro',  startDate:'2025-04-20', dueDate:'2025-05-10', notes:'' },
-    { id:'t13', projectId:'p4', name:'概念發展',          status:'進行中',    assignee:'Hiro',  startDate:'2025-03-15', dueDate:'2025-04-10', notes:'香材選定中' },
-    { id:'t14', projectId:'p4', name:'香座造型確認',      status:'未開始',    assignee:'Hiro',  startDate:'2025-04-10', dueDate:'2025-05-01', notes:'' },
-    { id:'t15', projectId:'p4', name:'品牌故事撰寫',      status:'未開始',    assignee:'Mille', startDate:'2025-05-01', dueDate:'2025-05-15', notes:'' },
+    { id:'t1', projectId:'p1', name:'矽膠模具開模',    status:'完成',      assignee:'Hiro',  startDate:'2025-02-01', dueDate:'2025-03-01', notes:'' },
+    { id:'t2', projectId:'p1', name:'礦物樹脂配方',    status:'完成',      assignee:'Hiro',  startDate:'2025-03-01', dueDate:'2025-03-20', notes:'' },
+    { id:'t3', projectId:'p1', name:'比例修正',        status:'進行中',    assignee:'Hiro',  startDate:'2025-03-20', dueDate:'2025-04-20', notes:'' },
+    { id:'t4', projectId:'p1', name:'燈罩材質確認',    status:'未開始',    assignee:'Hiro',  startDate:'',           dueDate:'2025-05-10', notes:'' },
+    { id:'t5', projectId:'p2', name:'設計定稿',        status:'完成',      assignee:'Hiro',  startDate:'2025-02-15', dueDate:'2025-03-10', notes:'' },
+    { id:'t6', projectId:'p2', name:'材料採購',        status:'進行中',    assignee:'Mille', startDate:'2025-03-10', dueDate:'2025-04-15', notes:'' },
+    { id:'t7', projectId:'p3', name:'草稿設計',        status:'二次進行中',assignee:'Hiro',  startDate:'2025-03-01', dueDate:'2025-03-25', notes:'' },
+    { id:'t8', projectId:'p3', name:'3D 建模',         status:'進行中',    assignee:'Hiro',  startDate:'2025-03-25', dueDate:'2025-04-20', notes:'' },
+    { id:'t9', projectId:'p4', name:'概念發展',        status:'進行中',    assignee:'Hiro',  startDate:'2025-03-15', dueDate:'2025-04-10', notes:'' },
+    { id:'t10',projectId:'p4', name:'香座造型確認',    status:'未開始',    assignee:'Hiro',  startDate:'',           dueDate:'2025-05-01', notes:'' },
   ]
 };
 
-// ─── GOOGLE OAUTH ──────────────────────────────────────────
-function signIn(silent = false) {
-  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.startsWith('YOUR_')) {
-    toast('⚠ 請先在程式碼中設定 GOOGLE_CLIENT_ID');
+let statusDropTarget = null;
+let selectedColor = '#2563eb';
+let charts = {};
+
+// ─── CONNECT ──────────────────────────────────────────────
+async function connectSheet() {
+  const url = document.getElementById('api-url-input').value.trim();
+  if (!url || !url.includes('script.google.com')) {
+    toast('請輸入有效的 Apps Script 網址');
     return;
   }
-  const redirectUri = 'https://haoo512.github.io/Sheet-PM/';
-  const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: redirectUri,
-    response_type: 'token',
-    scope: SCOPES,
-    include_granted_scopes: 'true',
-  });
-  // Only add prompt=none for silent refresh; omit entirely for normal login
-  if (silent) params.set('prompt', 'none');
-  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
-}
-
-function handleOAuthCallback() {
-  const hash = window.location.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  const error = params.get('error');
-  const token = params.get('access_token');
-  const expiresIn = parseInt(params.get('expires_in') || '3600');
-
-  window.history.replaceState(null, '', window.location.pathname);
-
-  if (error) {
-    // Silent refresh failed (user needs to re-consent) — show login screen
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('token_expiry');
-    show('login-screen');
-    hide('loading');
-    return;
-  }
-
-  if (token) {
-    state.accessToken = token;
-    const expiry = Date.now() + (expiresIn - 120) * 1000;
-    sessionStorage.setItem('access_token', token);
-    sessionStorage.setItem('token_expiry', String(expiry));
-    scheduleRefresh(expiresIn);
-    fetchUserInfo();
-  }
-}
-
-async function fetchUserInfo() {
+  state.apiUrl = url;
+  localStorage.setItem('fenzo_api_url', url);
+  showLoading('連接中...');
   try {
-    const r = await apiFetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: 'Bearer ' + state.accessToken }
-    });
-    const data = await r.json();
-    state.user = data;
-    updateUserAvatar();
-    hide('login-screen');
-    if (DEFAULT_SHEET_ID) {
-      state.spreadsheetId = DEFAULT_SHEET_ID;
-      showLoading('載入專案資料...');
-      loadSheetData().then(() => { hideLoading(); launchApp(); }).catch(() => { hideLoading(); show('file-screen'); });
-    } else {
-      show('file-screen');
-    }
+    await loadSheetData();
+    hideLoading();
+    launchApp();
   } catch(e) {
-    toast('取得用戶資訊失敗');
+    hideLoading();
+    toast('連接失敗，請確認網址是否正確');
   }
-}
-
-function updateUserAvatar() {
-  const el = document.getElementById('user-avatar');
-  if (state.user?.picture) {
-    el.innerHTML = `<img src="${state.user.picture}" alt="">`;
-  } else if (state.user?.name) {
-    el.textContent = state.user.name[0];
-  }
-}
-
-function signOut() {
-  sessionStorage.removeItem('access_token');
-  state = { user:null, accessToken:null, spreadsheetId:null, sheetName:null,
-            projects:[], tasks:[], isDemo:false, lastSync:null, pendingChanges:[] };
-  show('login-screen');
-  hide('file-screen');
-  hide('app');
-}
-
-// ─── FILE LOADING ──────────────────────────────────────────
-async function loadFromUrl() {
-  const url = document.getElementById('sheet-url-input').value.trim();
-  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-  if (!match) { toast('請輸入有效的 Google Sheets 網址'); return; }
-  state.spreadsheetId = match[1];
-  showLoading('讀取 Sheets 資料...');
-  await loadSheetData();
-  hideLoading();
-  launchApp();
-}
-
-
-
-function switchSheet() {
-  show('file-screen');
-  hide('app');
 }
 
 function loadDemo() {
   state.isDemo = true;
   state.projects = DEMO_DATA.projects.map(p => ({...p}));
-  state.tasks = DEMO_DATA.tasks.map(t => ({...t}));
+  state.tasks    = DEMO_DATA.tasks.map(t => ({...t}));
   state.sheetName = DEMO_DATA.sheetName;
-  state.lastSync = new Date();
-  hide('login-screen');
-  hide('file-screen');
+  state.lastSync  = new Date();
+  hide('setup-screen');
   launchApp();
 }
 
-// ─── CREATE TEMPLATE ──────────────────────────────────────
-async function createTemplateSheet() {
-  if (!state.accessToken) { toast('請先登入 Google 帳戶'); return; }
-  showLoading('在 Google Drive 建立模板...');
+function switchSheet() {
+  document.getElementById('app').style.display = 'none';
+  show('setup-screen');
+}
+
+function signOut() {
+  localStorage.removeItem('fenzo_api_url');
+  state.apiUrl = null;
+  document.getElementById('app').style.display = 'none';
+  show('setup-screen');
+}
+
+// ─── API ──────────────────────────────────────────────────
+async function loadSheetData() {
+  if (!state.apiUrl) return;
+  const res = await fetch(state.apiUrl + '?t=' + Date.now());
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  state.projects = (data.projects || []).filter(p => p.id);
+  state.tasks    = (data.tasks    || []).filter(t => t.id);
+  state.lastSync = new Date();
+}
+
+async function writeToSheet() {
+  if (state.isDemo || !state.apiUrl) return;
   try {
-    const headers = {
-      'Authorization': 'Bearer ' + state.accessToken,
-      'Content-Type': 'application/json',
-    };
-
-    // 1. Create spreadsheet
-    const createRes = await apiFetch('https://sheets.googleapis.com/v4/spreadsheets', {
-      method: 'POST', headers,
-      body: JSON.stringify({
-        properties: { title: 'Sheet PM 專案模板' },
-        sheets: [
-          { properties: { title: 'Projects', sheetId: 0 } },
-          { properties: { title: 'Tasks', sheetId: 1 } },
-          { properties: { title: '說明', sheetId: 2 } },
-        ]
-      })
+    const res = await fetch(state.apiUrl, {
+      method: 'POST',
+      body: JSON.stringify({ projects: state.projects, tasks: state.tasks }),
     });
-    const sheet = await createRes.json();
-    const sid = sheet.spreadsheetId;
-
-    // 2. Write Projects sheet
-    const projValues = [
-      ['id', 'name', 'color', 'owner'],
-      ['# 欄位說明', '產品線名稱', '色碼 (#hex)', '負責人'],
-      ['p1', '範例產品線 A', '#2563eb', 'Hiro'],
-      ['p2', '範例產品線 B', '#16a34a', 'Mille'],
-    ];
-
-    // 3. Write Tasks sheet
-    const taskValues = [
-      ['id', 'projectId', 'name', 'status', 'assignee', 'startDate', 'dueDate', 'notes'],
-      ['# 欄位說明', '對應 Projects 的 id', '任務名稱', '狀態（見說明頁）', '負責人', 'YYYY-MM-DD', 'YYYY-MM-DD', '備註'],
-      ['t1', 'p1', '設計草稿', '未開始', 'Hiro', '', '', ''],
-      ['t2', 'p1', '材料確認', '進行中', 'Hiro', '2025-04-01', '2025-04-30', '等供應商報價'],
-      ['t3', 'p1', '樣品製作', '完成', 'Hiro', '2025-03-01', '2025-03-20', ''],
-      ['t4', 'p2', '品牌攝影', '未開始', 'Mille', '', '2025-05-15', ''],
-    ];
-
-    // 4. Write 說明 sheet
-    const infoValues = [
-      ['Sheet PM — 欄位說明'],
-      [''],
-      ['【Projects 工作表】'],
-      ['id', '唯一識別碼，自訂字串，不可重複（例：p1, p2）'],
-      ['name', '產品線名稱，顯示在看板上'],
-      ['color', '色碼，格式 #xxxxxx（例：#2563eb）'],
-      ['owner', '負責人姓名'],
-      [''],
-      ['【Tasks 工作表】'],
-      ['id', '唯一識別碼，不可重複（例：t1, t2）'],
-      ['projectId', '對應 Projects 的 id，決定此任務屬於哪條產品線'],
-      ['name', '任務名稱'],
-      ['status', '狀態，只能填以下其中一個：'],
-      ['', '未開始'],
-      ['', '進行中'],
-      ['', '完成'],
-      ['', '擱置'],
-      ['', '二次進行中'],
-      ['', '三次進行中'],
-      ['assignee', '負責人'],
-      ['startDate', '開始日期，格式 YYYY-MM-DD（例：2025-04-01）'],
-      ['dueDate', '截止日期，格式 YYYY-MM-DD'],
-      ['notes', '備註，可留空'],
-      [''],
-      ['【注意事項】'],
-      ['', '第一列為欄位標題，請勿刪除或更改'],
-      ['', '以 # 開頭的列為說明列，可刪除'],
-      ['', '日期欄若不填，請保持空白即可'],
-    ];
-
-    const base = `https://sheets.googleapis.com/v4/spreadsheets/${sid}/values`;
-    await fetch(`${base}/Projects?valueInputOption=RAW`, { method:'PUT', headers, body: JSON.stringify({ values: projValues }) });
-    await fetch(`${base}/Tasks?valueInputOption=RAW`,    { method:'PUT', headers, body: JSON.stringify({ values: taskValues }) });
-    await fetch(`${base}/說明?valueInputOption=RAW`,     { method:'PUT', headers, body: JSON.stringify({ values: infoValues }) });
-
-    // 5. Load it directly
-    state.spreadsheetId = sid;
-    state.isDemo = false;
-    await loadSheetData();
-    hideLoading();
-    launchApp();
-    toast('✓ 模板已建立並開啟');
-
-    // 6. Open in new tab for reference
-    setTimeout(() => {
-      window.open(`https://docs.google.com/spreadsheets/d/${sid}`, '_blank');
-    }, 800);
-
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    state.lastSync = new Date();
+    updateSyncTime();
+    toast('✓ 已儲存');
   } catch(e) {
-    hideLoading();
-    console.error(e);
-    toast('建立失敗，請確認已啟用 Google Sheets API');
+    toast('⚠ 儲存失敗：' + e.message);
   }
 }
 
-// ─── SHEETS API ────────────────────────────────────────────
-async function loadSheetData() {
+async function refreshData() {
+  if (state.isDemo) { renderAll(); toast('示範模式'); return; }
+  if (!state.apiUrl) return;
+  showLoading('同步中...');
   try {
-    const base = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheetId}`;
-    const headers = { Authorization: 'Bearer ' + state.accessToken };
-
-    // Get sheet metadata
-    const meta = await (await apiFetch(base, { headers })).json();
-    state.sheetName = meta.properties?.title || 'Untitled';
-
-    // Read projects sheet
-    const projRes = await apiFetch(`${base}/values/Projects?majorDimension=ROWS`, { headers });
-    const projData = await projRes.json();
-    parseProjects(projData.values || []);
-
-    // Read tasks sheet
-    const taskRes = await apiFetch(`${base}/values/Tasks?majorDimension=ROWS`, { headers });
-    const taskData = await taskRes.json();
-    parseTasks(taskData.values || []);
-
-    state.lastSync = new Date();
+    await loadSheetData();
+    renderAll();
+    toast('已同步');
   } catch(e) {
-    console.error(e);
-    toast('讀取 Sheets 失敗，請確認網址與權限');
-    throw e;
+    toast('同步失敗');
   }
+  hideLoading();
 }
 
 function parseProjects(rows) {
   if (rows.length < 2) return;
-  // header: id, name, color, owner
   state.projects = rows.slice(1).filter(r => r[0]).map(r => ({
-    id: r[0] || uid(),
-    name: r[1] || '',
-    color: r[2] || '#2563eb',
-    owner: r[3] || '',
+    id: r[0]||'', name: r[1]||'', color: r[2]||'#2563eb', owner: r[3]||'',
   }));
 }
 
 function parseTasks(rows) {
   if (rows.length < 2) return;
-  // header: id, projectId, name, status, assignee, startDate, dueDate, notes
   state.tasks = rows.slice(1).filter(r => r[0]).map(r => ({
-    id: r[0] || uid(),
-    projectId: r[1] || '',
-    name: r[2] || '',
-    status: r[3] || '未開始',
-    assignee: r[4] || '',
-    startDate: r[5] || '',
-    dueDate: r[6] || '',
-    notes: r[7] || '',
+    id: r[0]||'', projectId: r[1]||'', name: r[2]||'',
+    status: r[3]||'未開始', assignee: r[4]||'',
+    startDate: r[5]||'', dueDate: r[6]||'', notes: r[7]||'',
   }));
 }
 
-async function writeToSheet() {
-  if (state.isDemo) { return; }
-  if (!state.accessToken || !state.spreadsheetId) return;
-
-  const base = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheetId}/values`;
-  const headers = {
-    'Authorization': 'Bearer ' + state.accessToken,
-    'Content-Type': 'application/json',
-  };
-
-  // Write projects
-  const projValues = [
-    ['id','name','color','owner'],
-    ...state.projects.map(p => [p.id, p.name, p.color, p.owner])
-  ];
-
-  // Write tasks
-  const taskValues = [
-    ['id','projectId','name','status','assignee','startDate','dueDate','notes'],
-    ...state.tasks.map(t => [t.id, t.projectId, t.name, t.status, t.assignee, t.startDate, t.dueDate, t.notes])
-  ];
-
-  try {
-    const r1 = await apiFetch(`${base}/Projects?valueInputOption=RAW`, {
-      method: 'PUT', headers,
-      body: JSON.stringify({ values: projValues })
-    });
-    const r2 = await apiFetch(`${base}/Tasks?valueInputOption=RAW`, {
-      method: 'PUT', headers,
-      body: JSON.stringify({ values: taskValues })
-    });
-
-    if (!r1.ok || !r2.ok) {
-      const err = await (r1.ok ? r2 : r1).json();
-      const msg = err?.error?.message || '未知錯誤';
-      const status = r1.ok ? r2.status : r1.status;
-      if (status === 401) {
-        toast('⚠ 登入已過期，請重新整理頁面並重新登入');
-      } else if (status === 403) {
-        toast('⚠ 沒有寫入權限，請確認 Sheets 共用設定');
-      } else {
-        toast('⚠ 儲存失敗：' + msg);
-      }
-      console.error('writeToSheet error:', status, msg);
-      return;
-    }
-
-    state.lastSync = new Date();
-    updateSyncTime();
-    toast('✓ 已儲存');
-  } catch(e) {
-    console.error('writeToSheet exception:', e);
-    toast('⚠ 網路錯誤，儲存失敗');
-  }
-}
-
-async function refreshData() {
-  if (state.isDemo) { renderAll(); toast('示範模式已重新整理'); return; }
-  if (!state.spreadsheetId) return;
-  showLoading('同步中...');
-  try {
-    await loadSheetData();
-    renderAll();
-    toast('已同步最新資料');
-  } catch(e) {}
-  hideLoading();
-}
-
-// ─── LAUNCH APP ────────────────────────────────────────────
+// ─── LAUNCH ───────────────────────────────────────────────
 function launchApp() {
-  hide('login-screen');
-  hide('file-screen');
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('sheet-badge').textContent = state.sheetName;
+  hide('setup-screen');
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  document.getElementById('sheet-badge').textContent = state.sheetName || 'Fenzo PM';
   updateSyncTime();
   renderAll();
 }
@@ -2700,30 +2387,16 @@ function toast(msg) {
 
 // ─── INIT ──────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  // Check OAuth callback (both success token and error from silent refresh)
-  if (window.location.hash.includes('access_token') || window.location.hash.includes('error=')) {
-    handleOAuthCallback();
-    return;
-  }
-  // Check stored token with expiry
-  const stored = sessionStorage.getItem('access_token');
-  const expiry = parseInt(sessionStorage.getItem('token_expiry') || '0');
-  if (stored && Date.now() < expiry) {
-    state.accessToken = stored;
-    const remaining = Math.floor((expiry - Date.now()) / 1000);
-    scheduleRefresh(remaining);
-    fetchUserInfo();
-    return;
-  }
-  // Token missing or expired — try silent refresh
-  sessionStorage.removeItem('access_token');
-  sessionStorage.removeItem('token_expiry');
-  if (stored) {
-    // Had a token before, try silent first
-    signIn(true);
+  const saved = localStorage.getItem('fenzo_api_url') || DEFAULT_API_URL;
+  if (saved && saved.includes('script.google.com') && !saved.includes('example')) {
+    document.getElementById('api-url-input').value = saved;
+    state.apiUrl = saved;
+    showLoading('載入資料...');
+    loadSheetData()
+      .then(() => { hideLoading(); launchApp(); })
+      .catch(() => { hideLoading(); show('setup-screen'); });
   } else {
-    // Never logged in, show login screen
-    show('login-screen');
+    show('setup-screen');
   }
 });
 </script>
